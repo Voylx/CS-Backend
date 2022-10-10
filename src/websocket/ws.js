@@ -32,6 +32,8 @@ const symstr = sym.reduce(
 
 const serverAddress = symstr.substring(0, symstr.length - 1);
 
+console.log(serverAddress);
+
 const ws = new WebSocket(serverAddress);
 
 ws.on("open", () => console.log("Connect"));
@@ -41,8 +43,8 @@ ws.on("close", () => console.log("Disconnect"));
 ws.on("message", (msg) => {
   try {
     const data = JSON.parse(msg);
-    // console.table(data);
-    console.log(data.sym.slice(4), " : ", data.rat);
+    console.log(data?.stream.substring(17), data.rat);
+    // console.log(data.sym.slice(4), " : ", data.rat);
   } catch (err) {
     console.log({ error: err.message });
   }

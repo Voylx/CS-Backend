@@ -117,6 +117,11 @@ const getclosechart = async (symbol, tf, day) => {
   const result = await getchart(symbol, tf, day);
   return result.c;
 };
+
+const getticker = async () => {
+  const result = await axios.get("/api/market/ticker");
+  return result.data;
+};
 module.exports = {
   getSevertime,
   balances,
@@ -124,4 +129,5 @@ module.exports = {
   place_ask,
   getchart,
   getclosechart,
+  getticker,
 };

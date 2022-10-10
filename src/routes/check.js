@@ -76,7 +76,7 @@ router.post("/havebot", (req, res) => {
       //Check SQL Error
       if (err) {
         console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
+        res.status(500).send({ status: "error", message: err.message });
       } else if (results.length === 0) {
         res.send({
           status: "ok",
