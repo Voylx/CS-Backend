@@ -1,6 +1,6 @@
 const express = require("express");
 
-const db = require("../services/db");
+const { db } = require("../services/db");
 const bitkub = require("../API/bitkub");
 
 const router = express.Router();

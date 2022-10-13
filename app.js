@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const db = require("./src/services/db");
+const { db } = require("./src/services/db");
 const { v4: uuidv4 } = require("uuid");
 const Axios = require("./src/services/Axios");
 const bitkub = require("./src/API/bitkub");
@@ -85,28 +85,26 @@ app.post("/login", function (req, res) {
       // console.log(users);
       if (err) {
         res.status(500).send({ status: "error", message: err.sqlMessage });
-        return;
-      }
-      if (users.length === 0) {
+      } else if (users.length === 0) {
         res.status(404).send({ status: "error", message: "User not found" });
-        return;
       }
       // console.log(password, users[0].password);
-
-      bcrypt.compare(password, users[0].password, function (err, result) {
-        if (result) {
-          // const token = jwt.sign({ user_id: users[0].user_id }, secert, {
-          //   expiresIn: "1h",
-          // });
-          const token = createToken(users[0].user_id);
-          res.send({ status: "ok", message: "login success", token: token });
-        } else {
-          res.status(400).send({
-            status: "error",
-            message: "The password that you've entered is incorrect.",
-          });
-        }
-      });
+      else {
+        bcrypt.compare(password, users[0].password, function (err, result) {
+          if (result) {
+            // const token = jwt.sign({ user_id: users[0].user_id }, secert, {
+            //   expiresIn: "1h",
+            // });
+            const token = createToken(users[0].user_id);
+            res.send({ status: "ok", message: "login success", token: token });
+          } else {
+            res.status(400).send({
+              status: "error",
+              message: "The password that you've entered is incorrect.",
+            });
+          }
+        });
+      }
     }
   );
 });

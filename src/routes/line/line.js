@@ -1,6 +1,6 @@
 const express = require("express");
 
-const db = require("../../services/db");
+const { db } = require("../../services/db");
 
 const authgetuser = require("../../middleware/authen_and_getuserid");
 
