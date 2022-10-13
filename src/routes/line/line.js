@@ -10,11 +10,11 @@ const line = require("../../services/line");
 
 router.post("/linewebhook", (req, res) => {
   const { events } = req.body;
-  const lineuserid = events[0].source.userId;
-  const replyToken = events[0].replyToken;
+  const lineuserid = events[0]?.source?.userId;
+  const replyToken = events[0]?.replyToken;
   const text = events[0]?.message?.text;
   // prettier-ignore
-  if (!text) {  res.send("ok"); return; }
+  if (!text||!lineuserid||!text) {  res.send("ok"); return; }
 
   //todooooo
   //เอาlineuseridไปเชคในตาราง line
