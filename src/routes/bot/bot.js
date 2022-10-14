@@ -173,7 +173,7 @@ async function calc_stg(stg_id) {
     LEFT JOIN bitkub on bot.User_id = bitkub.User_id AND bot.Type = 1
     WHERE Strategys_Id= ? AND (Sym = 
   `;
-  const symUse = sym_test;
+  const symUse = sym_action;
   syms = Object.keys(symUse.action);
   if (syms.length === 0) return;
   syms.map((v, i) => {
