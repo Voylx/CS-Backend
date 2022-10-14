@@ -8,7 +8,8 @@ const router = express.Router();
 
 const line = require("../../services/line");
 
-router.post("/linewebhook", (req, res) => {
+router.post("/linewebhook", async (req, res) => {
+  const db = await require("../../services/db_promise");
   const { events } = req.body;
   const lineuserid = events[0]?.source?.userId;
   const replyToken = events[0]?.replyToken;
@@ -18,57 +19,29 @@ router.post("/linewebhook", (req, res) => {
 
   //todooooo
   //เอาlineuseridไปเชคในตาราง line
-  db.query(
-    "SELECT * FROM line WHERE LineUser_id = ?",
-    [lineuserid],
-    (err, lineUsers) => {
-      // prettier-ignore
-      if (err) {res.status(500).send({ status: "error", message: err }); return; }
-      // prettier-ignore
-      if (lineUsers.length > 0) { res.send("ok"); return; }
-      // ถ้าไม่มี ค่อยทำ
-      console.log(text);
-      // check text and rand_num
-      db.query(
-        "SELECT * FROM prelinkline WHERE rand_num = ?",
-        [text],
-        (err, data) => {
-          // prettier-ignore
-          if (err) {res.status(500).send({ status: "error", message: err }); return; }
-          // prettier-ignore
-          if (data.length === 0) { res.send("ok"); return; }
+  // prettier-ignore
+  try {
+    const [lineUsers] = await db.execute("SELECT * FROM line WHERE LineUser_id = ?",[lineuserid]);
+    if (lineUsers.length > 0) { res.send("ok"); return; }
+    // ถ้าไม่มี ค่อยทำ
+    // check text and rand_num
+    const [data] = await db.query( "SELECT * FROM prelinkline WHERE rand_num = ?", [text] );
+    if (data.length === 0) { res.send("ok"); return; }
 
-          // store line_users_id in line table
-          db.execute(
-            "INSERT INTO line (User_id, LineUser_id) VALUES (?,?); ",
-            [data[0].User_id, lineuserid],
-            (err, results) => {
-              if (err) {
-                console.log(err);
-                res.status(500).send({ status: "error", message: err });
-                return;
-              }
-              db.execute(
-                "DELETE FROM prelinkline WHERE User_id = ?",
-                [data[0].User_id],
-                (err, results) => {
-                  if (err) {
-                    console.log(err);
-                    res.status(500).send({ status: "error", message: err });
-                    return;
-                  }
+    // store line_users_id in line table
+    await db.query("INSERT INTO line (User_id, LineUser_id) VALUES (?,?);", [data[0].User_id, lineuserid]);
+    
+    // delete in prelinkline
+    await db.query("DELETE FROM prelinkline WHERE User_id = ?", [data[0].User_id]);
+    
+    line
+      .reply(replyToken, "Connect Success")
+      .then((e) => res.send(e));
 
-                  line
-                    .reply(replyToken, "Connect Success")
-                    .then((e) => res.send(e));
-                }
-              );
-            }
-          );
-        }
-      );
-    }
-  );
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "error", message: error });
+  }
 });
 
 router.post("/pushtextmessage", async (req, res) => {
