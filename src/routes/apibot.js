@@ -103,9 +103,11 @@ router.post(
           return;
         }
         if (result.affectedRows === 0) {
-          res
-            .status(500)
-            .send({ status: "error", message: "Can not add selected" });
+          res.status(500).send({
+            status: "error",
+            message:
+              "1 symbol can choose 1 strategy only.\n1 เหรียญ เลือกได้ 1 กลยุทธ์ เท่านั้น",
+          });
           return;
         }
         res.status(200).send({
