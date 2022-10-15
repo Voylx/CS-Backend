@@ -230,7 +230,7 @@ router.get("/every1D", async (req, res) => {
   try {
     const cdc1D = await calc_stg(1);
     const ema1D = await calc_stg(3);
-    res.send({ cdc1D: cdc1D || null, ema1D: ema1D || null });
+    res.send({ cdc1D, ema1D });
   } catch (error) {
     console.log(error);
     res.status(500).send({ status: "error", message: error?.message });
@@ -240,7 +240,7 @@ router.get("/every4H", async (req, res) => {
   try {
     const cdc4H = await calc_stg(2);
     const ema4H = await calc_stg(4);
-    res.send({ cdc4H: cdc4H || null, ema4H: ema4H || null });
+    res.send({ cdc4H, ema4H });
   } catch (error) {
     console.log(error);
     res.status(500).send({ status: "error", message: error?.message });
@@ -249,8 +249,7 @@ router.get("/every4H", async (req, res) => {
 router.get("/every1H", async (req, res) => {
   try {
     const ema1H = await calc_stg(5);
-    console.log({ ema1H: ema1H });
-    res.send({ ema1H: ema1H || null });
+    res.send({ ema1H });
   } catch (error) {
     console.log(error);
     res.status(500).send({ status: "error", message: error?.message });
