@@ -250,8 +250,8 @@ router.get("/every1H", async (req, res) => {
   try {
     const ema1H = await calc_stg(5);
     res.send({ ema1H: ema1H || null });
-    console.log(error);
   } catch (error) {
+    console.log(error);
     res.status(500).send({ status: "error", message: error?.message });
   }
 });
