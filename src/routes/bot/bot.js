@@ -132,6 +132,26 @@ router.get("/getsymaction", async (req, res) => {
   res.send({ status: "ok", sym_action });
 });
 
+async function store_to_sym_stg_history(syms_action, stg_id) {
+  const db = await require("../../services/db_promise");
+
+  try {
+    let arg = [];
+
+    Object.keys(syms_action).map((v, i) => {
+      arg.push([v, stg_id, syms_action[v]]);
+    });
+
+    const [result] = await db.query(
+      "INSERT INTO sym_stg_history (Sym, Strategy_id, Side) VALUES ? ",
+      [arg]
+    );
+    // console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function calc_stg(stg_id) {
   const db = await require("../../services/db_promise");
 
@@ -150,7 +170,7 @@ async function calc_stg(stg_id) {
     action: response.result
       ? Object.fromEntries(
           Object.entries(response.result).filter(([k, v]) => {
-            return v === "BUY🟢" || v === "SELL🔴";
+            return v === "BUY" || v === "SELL";
           })
         )
       : "Something went wrong.",
@@ -162,7 +182,7 @@ async function calc_stg(stg_id) {
 
   sym_test = {
     strategy: "cdc",
-    action: { BNB: "SELL🔴", BTC: "BUY🟢", ADA: "SELL🔴" },
+    action: { BNB: "SELL", BTC: "BUY", ADA: "SELL" },
   };
 
   let sql = `
@@ -176,6 +196,10 @@ async function calc_stg(stg_id) {
   const symUse = sym_action;
   syms = Object.keys(symUse.action);
   if (syms.length === 0) return { Action: symUse };
+
+  // store sym_action in sym_stg_history table
+  store_to_sym_stg_history(symUse.action, stg_id);
+
   syms.map((v, i) => {
     if (i < syms.length - 1) sql += "? or Sym =";
     else sql += " ?)";

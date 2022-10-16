@@ -33,8 +33,8 @@ const emacross = (data, { fast, slow }) => {
     else Yday = false;
 
     if (today != Yday) {
-      if (today) return "BUY🟢";
-      else return "SELL🔴";
+      if (today) return "BUY";
+      else return "SELL";
     } else return "No Action";
   } catch (error) {
     console.log(error);
