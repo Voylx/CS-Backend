@@ -300,4 +300,30 @@ router.post("/getsymstgboxdata", (req, res) => {
   });
 });
 
+router.post("/getusernames", async (req, res) => {
+  const db = await require("../services/db_promise");
+
+  const { User_id } = req.body;
+  if (!User_id) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request ",
+    });
+    return;
+  }
+  try {
+    const [user] = await db.execute(
+      "SELECT username FROM users WHERE User_id = ?",
+      [User_id]
+    );
+    res.send({
+      status: "success",
+      username: user[0].username,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "error", message: error.sqlMessage });
+  }
+});
+
 module.exports = router;

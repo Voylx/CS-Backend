@@ -231,23 +231,49 @@ async function calc_stg(stg_id) {
     });
   });
 
-  Object.entries(bot_action).map(async ([k, V]) => {
-    if (V.Type) {
-      // ACTION Trade
-    } else {
-      // ACTION Line
-      const pre_Text = V.action.map((v) => {
-        return v.Sym + " : " + v.Action;
-      });
-      if (!V.lineUser_id) return;
-      const resp = await line.push(
-        V.lineUser_id,
-        "Strategy : " + strategy_name[stg_id] + "\n" + pre_Text.join("\n")
-      );
-      console.log(resp);
-    }
-  });
-  return { Action: symUse, bot_action };
+  console.log(bot_action);
+  console.log(
+    Object.fromEntries(
+      Object.entries(bot_action).map(([k, V]) => {
+        const newV = Object.fromEntries(
+          Object.entries(V).filter(([key, v]) => {
+            return key === "Type" || key === "action";
+          })
+        );
+        console.log(newV);
+        return [k, newV];
+      })
+    )
+  );
+  const bot_action_filter = Object.fromEntries(
+    await Promise.all(
+      Object.entries(bot_action).map(async ([k, V]) => {
+        if (V.Type) {
+          // ACTION Trade
+        } else {
+          // ACTION Line
+          const pre_Text = V.action.map((v) => {
+            return v.Sym + " : " + v.Action;
+          });
+          if (!V.lineUser_id) return;
+          const resp = await line.push(
+            V.lineUser_id,
+            "Strategy : " + strategy_name[stg_id] + "\n" + pre_Text.join("\n")
+          );
+          console.log(resp);
+        }
+
+        const newV = Object.fromEntries(
+          Object.entries(V).filter(([key, v]) => {
+            return key === "Type" || key === "action";
+          })
+        );
+        return [k, newV];
+      })
+    )
+  );
+
+  return { Action: symUse, bot_action_f: bot_action_filter, bot_action };
 }
 
 router.get("/every1D", async (req, res) => {
