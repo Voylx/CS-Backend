@@ -261,17 +261,8 @@ router.post("/getsymstgboxdata", (req, res) => {
     });
     return;
   }
+
   const sql = `
-    SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
-    CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav
-    FROM symbols
-    JOIN strategies
-    LEFT JOIN 
-    fav ON symbols.Sym = fav.Sym AND 
-    strategies.Strategy_id = fav.Strategys_Id AND
-    fav.Bot_id = ?;
-  `;
-  const sql2 = `
     SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
     CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav,
     CASE WHEN selected.Selected_id IS NOT NULL THEN 1 END as isSelected
@@ -287,7 +278,7 @@ router.post("/getsymstgboxdata", (req, res) => {
     strategies.Strategy_id = selected.Strategys_Id;
   `;
 
-  db.execute(sql2, [Bot_id, Bot_id], (err, results) => {
+  db.execute(sql, [Bot_id, Bot_id], (err, results) => {
     if (err) {
       console.error(err);
       res.status(500).send({ status: "error", message: err.sqlMessage });
