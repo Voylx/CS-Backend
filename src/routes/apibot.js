@@ -278,7 +278,35 @@ router.post("/getsymstgboxdata", (req, res) => {
     strategies.Strategy_id = selected.Strategys_Id;
   `;
 
-  db.execute(sql, [Bot_id, Bot_id], (err, results) => {
+  const sql2 = `
+    SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
+      CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav,
+      CASE WHEN selected.Selected_id IS NOT NULL THEN 1 END as isSelected,
+      s3.Side,UNIX_TIMESTAMP(s3.Timestamp)AS Timestamp
+      
+      FROM symbols
+      JOIN strategies
+      LEFT JOIN 
+      fav ON symbols.Sym = fav.Sym AND 
+      strategies.Strategy_id = fav.Strategys_Id AND
+      fav.Bot_id = 'c3b5f2ea-02a2-45f2-89cc-7305893bddba'
+      LEFT JOIN
+      selected on selected.Bot_id = 'c3b5f2ea-02a2-45f2-89cc-7305893bddba' AND 
+      symbols.Sym = selected.Sym AND 
+      strategies.Strategy_id = selected.Strategys_Id
+      LEFT JOIN
+      (
+          SELECT s1.* FROM sym_stg_history s1
+      INNER JOIN
+      (
+      SELECT Sym,Strategy_id,max(Timestamp) as mts FROM sym_stg_history 
+      GROUP BY Sym,Strategy_id
+      ) s2 ON s2.Sym = s1.Sym  AND s1.Timestamp = mts
+      )s3 ON symbols.Sym = s3.Sym AND
+      strategies.Strategy_id = s3.Strategy_id;  
+  `;
+
+  db.execute(sql2, [Bot_id, Bot_id], (err, results) => {
     if (err) {
       console.error(err);
       res.status(500).send({ status: "error", message: err.sqlMessage });
