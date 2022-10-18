@@ -9,15 +9,6 @@ const router = express.Router();
 
 router.use(cron_bot);
 
-router.get("/test", async (req, res) => {
-  console.log(req.headers.BTK);
-
-  const data = await BTK.getclosechart("BTC", "1D", 5);
-  console.log(data);
-
-  res.send({ status: "ok", message: "test" });
-});
-
 //get api_key from database (only methods post)
 router.post("/", function (req, res, next) {
   const { User_id } = req.body;

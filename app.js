@@ -2,8 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const { db } = require("./src/services/db");
 const { v4: uuidv4 } = require("uuid");
-const Axios = require("./src/services/Axios");
-const bitkub = require("./src/API/bitkub");
 
 const bcrypt = require("bcrypt");
 const saltRounds = 13;
@@ -11,6 +9,7 @@ const saltRounds = 13;
 const { authen, createToken } = require("./src/services/authen");
 
 const apibot = require("./src/routes/apibot");
+const apibot_get = require("./src/routes/apibot_get");
 const line = require("./src/routes/line/line");
 
 const app = express();
@@ -20,7 +19,9 @@ const port = process.env.PORT || 3333;
 app.use(cors());
 app.use(express.json());
 
+app.use("/api", apibot_get);
 app.use("/api", apibot);
+
 app.use("/", line);
 
 app.get("/", (req, res) => {
@@ -144,31 +145,6 @@ app.get("/strategies", (req, res) => {
       response[Strategy_id] = Strategy_name;
     });
     res.send({ status: "ok", strategies: response });
-  });
-});
-
-app.get("/api/tickers", async (req, res) => {
-  const getsym = await Axios.get("/symbols");
-  const sym = getsym?.data?.symbols;
-
-  const data = await bitkub.getticker();
-
-  // console.log(sym);
-  const results = {};
-
-  Object.entries(data).map(([key, Value]) => {
-    const V = Object.fromEntries(
-      Object.entries(Value).filter(([k, v]) => {
-        return k === "last" || k === "percentChange";
-      })
-    );
-    // console.log(k.substring(4));
-    if (sym.includes(key.substring(4))) results[key.substring(4)] = V;
-  });
-
-  res.send({
-    status: "success",
-    results,
   });
 });
 
