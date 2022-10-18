@@ -137,9 +137,11 @@ router.post("/delselected", (req, res) => {
         res.status(500).send({ status: "error", message: err.sqlMessage });
       }
       if (results.affectedRows === 0) {
-        res
-          .status(500)
-          .send({ status: "error", message: "Can not delete selected" });
+        res.status(500).send({
+          status: "error",
+          message: "Can not delete selected",
+          results: results,
+        });
         return;
       }
       res.status(200).send({
@@ -205,7 +207,7 @@ router.post("/delfav", (req, res) => {
       if (results.affectedRows === 0) {
         res.status(500).send({
           message: "Can't Delete Favorite",
-          results: results.affectedRows,
+          results: results?.affectedRows ?? results,
         });
         return;
       }
@@ -262,22 +264,6 @@ router.post("/getsymstgboxdata", (req, res) => {
     return;
   }
 
-  const sql = `
-    SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
-    CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav,
-    CASE WHEN selected.Selected_id IS NOT NULL THEN 1 END as isSelected
-    FROM symbols
-    JOIN strategies
-    LEFT JOIN 
-    fav ON symbols.Sym = fav.Sym AND 
-    strategies.Strategy_id = fav.Strategys_Id AND
-    fav.Bot_id = ?
-    LEFT JOIN
-    selected on selected.Bot_id = ? AND 
-    symbols.Sym = selected.Sym AND 
-    strategies.Strategy_id = selected.Strategys_Id;
-  `;
-
   const sql2 = `
     SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
       CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav,
@@ -289,9 +275,9 @@ router.post("/getsymstgboxdata", (req, res) => {
       LEFT JOIN 
       fav ON symbols.Sym = fav.Sym AND 
       strategies.Strategy_id = fav.Strategys_Id AND
-      fav.Bot_id = 'c3b5f2ea-02a2-45f2-89cc-7305893bddba'
+      fav.Bot_id = ?
       LEFT JOIN
-      selected on selected.Bot_id = 'c3b5f2ea-02a2-45f2-89cc-7305893bddba' AND 
+      selected on selected.Bot_id = ? AND 
       symbols.Sym = selected.Sym AND 
       strategies.Strategy_id = selected.Strategys_Id
       LEFT JOIN
