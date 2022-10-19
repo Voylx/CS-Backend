@@ -51,7 +51,6 @@ router.get("/getsymstghistory", async (req, res) => {
       WHERE Sym = ? AND strategies.Strategy_id =?
     `;
     const [data] = await db.execute(sql, [Sym, Strategy_id]);
-    console.log(data.length);
     // ถ้ามีhistoryแล้ว
     if (data.length > 0) {
       const historys = data.map((V) => {

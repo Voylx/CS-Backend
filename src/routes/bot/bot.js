@@ -124,4 +124,23 @@ router.get("/getsymaction", async (req, res) => {
   res.send({ status: "ok", sym_action });
 });
 
+router.get("/test", async (req, res) => {
+  // const [sym, tf, stg] = ["BNB", 60, "ema_10_21_test"];
+  const [sym, stg_id] = ["BNB", 5];
+
+  const strategies = require("../../strategies/emacross");
+  const strategy_name = {
+    1: ["cdc_test", "1D"],
+    2: ["cdc_test", "240"],
+    3: ["ema_10_21_test", "1D"],
+    4: ["ema_10_21_test", "240"],
+    5: ["ema_10_21_test", "60"],
+  };
+  const [stg, tf] = strategy_name[stg_id];
+
+  const data = await BTK.getclosechart(sym, tf, 200);
+  const { slow, fast } = strategies[stg](data);
+  res.send({ status: "ok", slow, fast });
+});
+
 module.exports = router;
