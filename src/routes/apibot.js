@@ -287,7 +287,7 @@ router.post("/getsymstgboxdata", (req, res) => {
       (
       SELECT Sym,Strategy_id,max(Timestamp) as mts FROM sym_stg_history 
       GROUP BY Sym,Strategy_id
-      ) s2 ON s2.Sym = s1.Sym  AND s1.Timestamp = mts
+      ) s2 ON s2.Sym = s1.Sym  AND s2.Strategy_id = s1.Strategy_id  AND s1.Timestamp = mts
       )s3 ON symbols.Sym = s3.Sym AND
       strategies.Strategy_id = s3.Strategy_id;  
   `;
@@ -364,9 +364,9 @@ router.post("/getsymstgboxdata_onlysym", (req, res) => {
       (
       SELECT Sym,Strategy_id,max(Timestamp) as mts FROM sym_stg_history 
       GROUP BY Sym,Strategy_id
-      ) s2 ON s2.Sym = s1.Sym  AND s1.Timestamp = mts
+      ) s2 ON s2.Sym = s1.Sym  AND s2.Strategy_id = s1.Strategy_id  AND s1.Timestamp = mts
       )s3 ON symbols.Sym = s3.Sym AND
-      strategies.Strategy_id = s3.Strategy_id
+      strategies.Strategy_id = s3.Strategy_id;
       WHERE symbols.Sym = ?;  
   `;
 
