@@ -382,4 +382,5 @@ router.post("/getsymstgboxdata_onlysym", (req, res) => {
     });
   });
 });
+
 module.exports = router;

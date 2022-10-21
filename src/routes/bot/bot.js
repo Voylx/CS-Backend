@@ -1,3 +1,4 @@
+"use strict";
 const express = require("express");
 const { db } = require("../../services/db");
 const BTK = require("../../API/bitkub");
@@ -104,7 +105,16 @@ router.post("/place_ask", (req, res) => {
 
 router.get("/getsymaction", async (req, res) => {
   const { stg } = req.query;
+  if (!stg) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request (stg is required)",
+    });
+    return;
+  }
+
   console.log(stg);
+
   const response = await calc_strategy(stg);
   // const response = await calc_strategy("ema_10_21");
 
@@ -124,23 +134,50 @@ router.get("/getsymaction", async (req, res) => {
   res.send({ status: "ok", sym_action });
 });
 
-router.get("/test", async (req, res) => {
-  // const [sym, tf, stg] = ["BNB", 60, "ema_10_21_test"];
-  const [sym, stg_id] = ["BNB", 5];
+router.get("/backtest", async (req, res) => {
+  const { stgID, sym, durtion } = req.query;
+  if (!stgID || !sym || !durtion) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request (stg,sym,duration is required)",
+    });
+    return;
+  }
 
-  const strategies = require("../../strategies/emacross");
-  const strategy_name = {
-    1: ["cdc_test", "1D"],
-    2: ["cdc_test", "240"],
-    3: ["ema_10_21_test", "1D"],
-    4: ["ema_10_21_test", "240"],
-    5: ["ema_10_21_test", "60"],
-  };
-  const [stg, tf] = strategy_name[stg_id];
+  try {
+    const { getEMA } = require("../../strategies/emacross");
+    const strategy_name = {
+      1: ["cdc", "1D"],
+      2: ["cdc", "240"],
+      3: ["ema_10_21", "1D"],
+      4: ["ema_10_21", "240"],
+      5: ["ema_10_21", "60"],
+    };
 
-  const data = await BTK.getclosechart(sym, tf, 200);
-  const { slow, fast } = strategies[stg](data);
-  res.send({ status: "ok", slow, fast });
+    const [stg, tf] = strategy_name[stgID];
+    // const data = await BTK.getclosechart(sym, tf, 99);
+    const { data, time } = await BTK.get_close_timechart(sym, tf, 30);
+    const { slow, fast } = getEMA[stg](data);
+    console.log({ data, time, slow, fast });
+
+    // for (let i = 0; i < data.length; i++) {
+    //   if (!fast[i - 1] || !slow[i - 1]) continue;
+
+    //   if (fast[i] > slow[i] && fast[i - 1] < slow[i - 1]) {
+    //     console.log("BUY");
+    //     continue;
+    //   }
+    //   if (fast[i] < slow[i] && fast[i - 1] > slow[i - 1]) {
+    //     console.log("SELL");
+    //     continue;
+    //   }
+    // }
+
+    res.send({ status: "ok", message: "backtest", data, time, slow, fast });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ status: "error", message: error?.message });
+  }
 });
 
 module.exports = router;

@@ -129,4 +129,31 @@ router.post("/bot_by_botid", async (req, res) => {
   }
 });
 
+router.post("/isSelectedSym", async (req, res) => {
+  const db = await require("../services/db_promise");
+  const { User_id, Bot_id, Sym } = req.body;
+  // check type bot
+  if (!Bot_id || !Sym) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request (Bot_id)",
+    });
+    return;
+  }
+
+  try {
+    const sql = `
+    SELECT * FROM selected WHERE Bot_id = ? AND Sym = ? 
+    `;
+
+    const [selected] = await db.execute(sql, [Bot_id, Sym]);
+    const data = selected[0];
+
+    res.send({ status: "success", selected: data || null });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "error", message: error });
+  }
+});
+
 module.exports = router;

@@ -115,7 +115,22 @@ const getchart = async (symbol, tf = "1D" || "240" || "60", day = 5) => {
 };
 const getclosechart = async (symbol, tf, day) => {
   const result = await getchart(symbol, tf, day);
-  return result.c;
+  const close_data = result.c;
+  if (tf == "60" || tf == "240") close_data.pop();
+
+  return close_data;
+};
+
+const get_close_timechart = async (symbol, tf, day) => {
+  const result = await getchart(symbol, tf, day);
+  const close_data = result.c;
+  const close_time = result.t;
+  if (tf == "60" || tf == "240") {
+    close_data.pop();
+    close_time.pop();
+  }
+
+  return { data: close_data, time: close_time };
 };
 
 const getticker = async () => {
@@ -129,5 +144,6 @@ module.exports = {
   place_ask,
   getchart,
   getclosechart,
+  get_close_timechart,
   getticker,
 };

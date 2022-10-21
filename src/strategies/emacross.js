@@ -13,16 +13,21 @@ const ema_10_21 = (data) => {
 };
 
 // Test
-const cdc_test = (data) => {
+const cdc_getema = (data) => {
   const fast = 12;
   const slow = 26;
-  return emacross_test(data, { fast, slow });
+  return getemacross(data, { fast, slow });
 };
 
-const ema_10_21_test = (data) => {
+const ema_10_21__getema = (data) => {
   const fast = 10;
   const slow = 21;
-  return emacross_test(data, { fast, slow });
+  return getemacross(data, { fast, slow });
+};
+
+const getEMA = {
+  cdc: (data) => cdc_getema(data),
+  ema_10_21: (data) => ema_10_21__getema(data),
 };
 
 // END TEST
@@ -52,13 +57,13 @@ const emacross = (data, { fast, slow }) => {
 };
 
 //TEST
-const emacross_test = (data, { fast, slow }) => {
+const getemacross = (data, { fast, slow }) => {
   try {
     // check is data null or undefined
     if (typeof data === "undefined" || data === null) return "No Data";
 
-    const slow_ema = ema(slow, data);
-    const fast_ema = ema(fast, data);
+    const slow_ema = [...Array(slow - 1).fill(null), ...ema(slow, data)];
+    const fast_ema = [...Array(fast - 1).fill(null), ...ema(fast, data)];
 
     return { slow: slow_ema, fast: fast_ema };
   } catch (error) {
@@ -68,4 +73,4 @@ const emacross_test = (data, { fast, slow }) => {
 
 //END TEST
 
-module.exports = { cdc, ema_10_21, cdc_test, ema_10_21_test };
+module.exports = { cdc, ema_10_21, getEMA };
