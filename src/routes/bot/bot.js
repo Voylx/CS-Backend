@@ -143,6 +143,25 @@ router.get("/backtest", async (req, res) => {
     });
     return;
   }
+  function unixTime(unixtime) {
+    if (unixtime) {
+      var u = new Date(unixtime * 1000);
+
+      return (
+        u.getUTCFullYear() +
+        "-" +
+        ("0" + (u.getMonth() + 1)).slice(-2) +
+        "-" +
+        ("0" + u.getDate()).slice(-2) +
+        " : " +
+        ("0" + u.getHours()).slice(-2) +
+        ":" +
+        ("0" + u.getMinutes()).slice(-2) +
+        ":" +
+        ("0" + u.getSeconds()).slice(-2)
+      );
+    }
+  }
 
   try {
     const { getEMA } = require("../../strategies/emacross");
@@ -156,24 +175,62 @@ router.get("/backtest", async (req, res) => {
 
     const [stg, tf] = strategy_name[stgID];
     // const data = await BTK.getclosechart(sym, tf, 99);
-    const { data, time } = await BTK.get_close_timechart(sym, tf, 30);
+    const { data, time } = await BTK.get_close_timechart(sym, tf, 700);
     const { slow, fast } = getEMA[stg](data);
-    console.log({ data, time, slow, fast });
+    // console.log({ data, time, slow, fast });
+    const initMoney = 1000;
+    let balance_bth = initMoney;
+    let balance_coin = 0;
 
-    // for (let i = 0; i < data.length; i++) {
-    //   if (!fast[i - 1] || !slow[i - 1]) continue;
+    const results = [];
+    const profit = [initMoney];
 
-    //   if (fast[i] > slow[i] && fast[i - 1] < slow[i - 1]) {
-    //     console.log("BUY");
-    //     continue;
-    //   }
-    //   if (fast[i] < slow[i] && fast[i - 1] > slow[i - 1]) {
-    //     console.log("SELL");
-    //     continue;
-    //   }
-    // }
+    function handleBuy(data, time) {
+      balance_coin = balance_bth / data;
+      balance_bth = 0;
+      results.push({
+        Action: "BUY",
+        price: data,
+        time: unixTime(time),
+        balance_bth,
+        balance_coin,
+      });
+    }
+    function handleSell(data, time) {
+      balance_bth = balance_coin * data;
+      profit.push(balance_bth);
+      balance_coin = 0;
+      results.push({
+        Action: "SELL",
+        price: data,
+        time: unixTime(time),
+        balance_bth,
+        balance_coin,
+      });
+    }
 
-    res.send({ status: "ok", message: "backtest", data, time, slow, fast });
+    for (let i = 0; i < data.length; i++) {
+      if (!fast[i - 1] || !slow[i - 1]) continue;
+
+      if (fast[i] > slow[i] && fast[i - 1] < slow[i - 1]) {
+        handleBuy(data[i], time[i]);
+        continue;
+      }
+      if (fast[i] < slow[i] && fast[i - 1] > slow[i - 1]) {
+        if (results.length > 0) handleSell(data[i], time[i]);
+        continue;
+      }
+    }
+
+    const profit_Percent = ((balance_bth - initMoney) / initMoney) * 100;
+
+    res.send({
+      status: "ok",
+      message: "backtest",
+      results,
+      profit,
+      profit_Percent,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({ status: "error", message: error?.message });
