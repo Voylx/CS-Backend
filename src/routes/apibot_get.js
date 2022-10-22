@@ -9,28 +9,33 @@ router.get("/test", function (req, res) {
 });
 
 router.get("/tickers", async (req, res) => {
-  const getsym = await Axios.get("/symbols");
-  const sym = getsym?.data?.symbols;
+  try {
+    const getsym = await Axios.get("/symbols");
+    const sym = getsym?.data?.symbols;
 
-  const data = await bitkub.getticker();
+    const data = await bitkub.getticker();
 
-  // console.log(sym);
-  const results = {};
+    // console.log(sym);
+    const results = {};
 
-  Object.entries(data).map(([key, Value]) => {
-    const V = Object.fromEntries(
-      Object.entries(Value).filter(([k, v]) => {
-        return k === "last" || k === "percentChange";
-      })
-    );
-    // console.log(k.substring(4));
-    if (sym.includes(key.substring(4))) results[key.substring(4)] = V;
-  });
+    Object.entries(data).map(([key, Value]) => {
+      const V = Object.fromEntries(
+        Object.entries(Value).filter(([k, v]) => {
+          return k === "last" || k === "percentChange";
+        })
+      );
+      // console.log(k.substring(4));
+      if (sym.includes(key.substring(4))) results[key.substring(4)] = V;
+    });
 
-  res.send({
-    status: "success",
-    results,
-  });
+    res.send({
+      status: "success",
+      results,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ status: "error", message: error });
+  }
 });
 
 router.get("/getsymstghistory", async (req, res) => {

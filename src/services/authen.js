@@ -7,7 +7,7 @@ const authen = (token) => {
     const decode = jwt.verify(token, secert);
     return { status: "ok", decode };
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return { status: "error", message: "Token invalid" };
   }
 };

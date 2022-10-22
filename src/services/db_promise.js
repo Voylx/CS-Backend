@@ -15,8 +15,15 @@ const dbconnect = {
 // module.exports = { db, dbconnect };
 
 module.exports = (async function () {
-  // create the connection to database
-  const db = await mysql.createConnection(dbconnect);
+  // get the client
+  const mysql = require("mysql2");
+  // create the pool
+  const pool = mysql.createPool(dbconnect);
+  // now get a Promise wrapped instance of that pool
+  const db = pool.promise();
+
+  // // create the connection to database
+  // const db = await mysql.createConnection(dbconnect);
 
   return db;
 })();
