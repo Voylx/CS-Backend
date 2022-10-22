@@ -1,62 +1,65 @@
 const express = require("express");
 
-const { db } = require("../services/db");
-const bitkub = require("../API/bitkub");
-
 const router = express.Router();
 
 //check
 
-router.post("/link_apibitkub", (req, res) => {
+router.post("/link_apibitkub", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { User_id } = req.body;
-  db.execute(
-    "SELECT COUNT(API_KEY) FROM bitkub Where  user_id =? ",
-    [User_id],
-    function (err, results) {
-      //Check SQL Error
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-      } else if (results.length === 0) {
-        res.status(404).send({
-          status: "err",
-          message: "api Not Found",
-        });
-      } else {
-        // console.log(results[0]["COUNT(API_KEY)"]);
-        res.send({
-          status: "ok",
-          linkAPI: Boolean(results[0]["COUNT(API_KEY)"]),
-        });
-      }
+
+  try {
+    const [results] = await db.execute(
+      "SELECT COUNT(API_KEY) FROM bitkub Where  user_id =? ",
+      [User_id]
+    );
+    if (results.length === 0) {
+      res.status(404).send({
+        status: "err",
+        message: "api Not Found",
+      });
+    } else {
+      // console.log(results[0]["COUNT(API_KEY)"]);
+      res.send({
+        status: "ok",
+        linkAPI: Boolean(results[0]["COUNT(API_KEY)"]),
+      });
     }
-  );
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+  }
 });
 
-router.post("/link_line", (req, res) => {
+router.post("/link_line", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { User_id } = req.body;
-  db.execute(
-    "SELECT COUNT(LineUser_id) FROM line Where  user_id =? ",
-    [User_id],
-    function (err, results) {
-      //Check SQL Error
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-      } else if (results.length === 0) {
-        res.status(404).send({
-          status: "err",
-          message: "LineUser Not Found",
-        });
-      } else {
-        // console.log(results[0]);
-        res.send({
-          status: "ok",
-          linkLine: Boolean(results[0]["COUNT(LineUser_id)"]),
-        });
-      }
+
+  try {
+    const [results] = await db.execute(
+      "SELECT COUNT(LineUser_id) FROM line Where  user_id =? ",
+      [User_id]
+    );
+    if (results.length === 0) {
+      res.status(404).send({
+        status: "err",
+        message: "LineUser Not Found",
+      });
+    } else {
+      // console.log(results[0]);
+      res.send({
+        status: "ok",
+        linkLine: Boolean(results[0]["COUNT(LineUser_id)"]),
+      });
     }
-  );
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+  }
 });
 
 router.post("/havebot", async (req, res) => {

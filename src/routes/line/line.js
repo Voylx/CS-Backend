@@ -1,7 +1,5 @@
 const express = require("express");
 
-const { db } = require("../../services/db");
-
 const authgetuser = require("../../middleware/authen_and_getuserid");
 
 const router = express.Router();
@@ -59,57 +57,61 @@ router.post("/pushtextmessage", async (req, res) => {
   res.send(resp);
 });
 
-router.post("/prelinkline", authgetuser, (req, res) => {
+router.post("/prelinkline", authgetuser, async (req, res) => {
+  const db = await require("../../services/db_promise");
   const { User_id } = req.body;
   const rand_num = 100000 + Math.floor(Math.random() * 800000);
   console.log(rand_num);
-  db.execute(
-    "INSERT IGNORE INTO prelinkline (User_id, rand_num ) VALUES (?,?)",
-    [User_id, rand_num],
-    (err, results) => {
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-        return;
-      }
-      if (results.affectedRows === 0) {
-        res.status(200).send({
-          status: "error",
-          message: "Already insert in prelinkline table",
-        });
-        return;
-      }
-      res.send({
-        status: "ok",
-        message: "success",
+
+  try {
+    const [results] = await db.execute(
+      "INSERT IGNORE INTO prelinkline (User_id, rand_num ) VALUES (?,?)",
+      [User_id, rand_num]
+    );
+    if (results.affectedRows === 0) {
+      res.status(200).send({
+        status: "error",
+        message: "Already insert in prelinkline table",
       });
+      return;
     }
-  );
+    res.send({
+      status: "ok",
+      message: "success",
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+  }
 });
 
-router.post("/get_prelinkline", authgetuser, (req, res) => {
+router.post("/get_prelinkline", authgetuser, async (req, res) => {
+  const db = await require("../../services/db_promise");
   const { User_id } = req.body;
-  db.execute(
-    "SELECT * FROM prelinkline Where  user_id =? ",
-    [User_id],
-    function (err, results) {
-      //Check SQL Error
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-      } else if (results.length === 0) {
-        res.status(200).send({
-          status: "ok",
-          data: null,
-        });
-      } else {
-        res.send({
-          status: "ok",
-          data: results[0],
-        });
-      }
+  try {
+    const [results] = await db.execute(
+      "SELECT * FROM prelinkline Where  user_id =? ",
+      [User_id]
+    );
+    if (results.length === 0) {
+      res.status(200).send({
+        status: "ok",
+        data: null,
+      });
+    } else {
+      res.send({
+        status: "ok",
+        data: results[0],
+      });
     }
-  );
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+  }
 });
 
 module.exports = router;

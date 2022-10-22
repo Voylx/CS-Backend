@@ -2,7 +2,6 @@ const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 
 const Axios = require("../services/Axios");
-const { db } = require("../services/db");
 const bitkub = require("../API/bitkub");
 
 const authgetuser = require("../middleware/authen_and_getuserid");
@@ -21,28 +20,30 @@ router.use(authgetuser);
 router.use(apibottrade);
 router.use("/check", check);
 
-router.post("/addbot", (req, res) => {
+router.post("/addbot", async (req, res) => {
+  const db = await require("../services/db_promise");
   //add to BOT TABLE
   const { User_id, Type } = req.body;
   const Bot_id = uuidv4();
-  db.execute(
-    `INSERT INTO bot (Bot_id,User_id,Type) 
-    SELECT ?,?,?
-    WHERE NOT EXISTS(
-      SELECT User_id,Type FROM bot WHERE User_id = ? AND Type = ?)`,
-    [Bot_id, User_id, Type, User_id, Type],
-    function (err, result) {
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-      } else if (result.affectedRows === 0) {
-        res.status(400).send({
-          status: "error",
-          message: "Bot has been created",
-        });
-      } else res.send({ status: "ok", message: "Create Bot Success" });
-    }
-  );
+  const sql = `
+      INSERT INTO bot (Bot_id,User_id,Type) 
+        SELECT ?,?,?
+        WHERE NOT EXISTS(
+        SELECT User_id,Type FROM bot WHERE User_id = ? AND Type = ?)  
+    `;
+  try {
+    //prettier-ignore
+    const [result] = await db.execute(sql, [Bot_id,User_id,Type,User_id,Type]);
+    if (result.affectedRows === 0) {
+      res.status(400).send({
+        status: "error",
+        message: "Bot has been created",
+      });
+    } else res.send({ status: "ok", message: "Create Bot Success" });
+  } catch (error) {
+    console.error(err);
+    res.status(500).send({ status: "error", message: err.sqlMessage });
+  }
 });
 router.post("/delete", (req, res) => {
   //delete Bot in BOT TABLE
@@ -90,36 +91,40 @@ router.post(
     }
     next();
   },
-  (req, res) => {
+  async (req, res) => {
+    const db = await require("../services/db_promise");
+
     //เก็บข้อมูลในDatabase
     const { Bot_id, Sym, Strategys_Id, Amt_money } = req.body;
-    db.execute(
-      "INSERT IGNORE INTO selected (Bot_id, Sym, Strategys_Id, Amt_money) VALUES (?,?,?,?)",
-      [Bot_id, Sym, Strategys_Id, Amt_money],
-      function (err, result) {
-        if (err) {
-          console.error(err);
-          res.status(500).send({ status: "error", message: err.sqlMessage });
-          return;
-        }
-        if (result.affectedRows === 0) {
-          res.status(500).send({
-            status: "error",
-            message:
-              "1 symbol can choose 1 strategy only.\n1 เหรียญ เลือกได้ 1 กลยุทธ์ เท่านั้น",
-          });
-          return;
-        }
-        res.status(200).send({
-          status: "success",
-          result,
+    try {
+      const [result] = await db.execute(
+        "INSERT IGNORE INTO selected (Bot_id, Sym, Strategys_Id, Amt_money) VALUES (?,?,?,?)",
+        [Bot_id, Sym, Strategys_Id, Amt_money]
+      );
+      if (result.affectedRows === 0) {
+        res.status(500).send({
+          status: "error",
+          message:
+            "1 symbol can choose 1 strategy only.\n1 เหรียญ เลือกได้ 1 กลยุทธ์ เท่านั้น",
         });
+        return;
       }
-    );
+      res.status(200).send({
+        status: "success",
+        result,
+      });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .send({ status: "error", message: error.sqlMessage || error });
+      return;
+    }
   }
 );
 
-router.post("/delselected", (req, res) => {
+router.post("/delselected", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { Bot_id, Sym, Strategys_Id } = req.body;
   if (!(Bot_id && Sym && Strategys_Id)) {
     res.status(400).send({
@@ -128,31 +133,34 @@ router.post("/delselected", (req, res) => {
     });
     return;
   }
-  db.execute(
-    "DELETE FROM selected WHERE Bot_id = ? AND Sym = ? AND Strategys_Id = ?",
-    [Bot_id, Sym, Strategys_Id],
-    function (err, results) {
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-      }
-      if (results.affectedRows === 0) {
-        res.status(500).send({
-          status: "error",
-          message: "Can not delete selected",
-          results: results,
-        });
-        return;
-      }
-      res.status(200).send({
-        status: "success",
-        results,
+
+  try {
+    const [results] = await db.execute(
+      "DELETE FROM selected WHERE Bot_id = ? AND Sym = ? AND Strategys_Id = ?",
+      [Bot_id, Sym, Strategys_Id]
+    );
+    if (results.affectedRows === 0) {
+      res.status(500).send({
+        status: "error",
+        message: "Can not delete selected",
+        results: results,
       });
+      return;
     }
-  );
+    res.status(200).send({
+      status: "success",
+      results,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error?.sqlMessage ?? error });
+  }
 });
 
-router.post("/addfav", (req, res) => {
+router.post("/addfav", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { Bot_id, Sym, Strategys_Id } = req.body;
   if (!(Bot_id && Sym && Strategys_Id)) {
     res.status(400).send({
@@ -161,32 +169,32 @@ router.post("/addfav", (req, res) => {
     });
     return;
   }
-  db.execute(
-    "INSERT IGNORE INTO fav (Bot_id, Sym, Strategys_Id) VALUES (?, ?, ?)",
-    [Bot_id, Sym, Strategys_Id],
-    function (err, results) {
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-        return;
-      }
-      if (results.affectedRows === 0) {
-        res.status(500).send({
-          message: "Can't Add Favorite",
-          results: results.affectedRows,
-        });
-        return;
-      }
-      res.status(200).send({
-        status: "success",
-        message: "Added new Favorite",
-        results,
+  try {
+    const [results] = await db.execute(
+      "INSERT IGNORE INTO fav (Bot_id, Sym, Strategys_Id) VALUES (?, ?, ?)",
+      [Bot_id, Sym, Strategys_Id]
+    );
+    if (results.affectedRows === 0) {
+      res.status(500).send({
+        message: "Can't Add Favorite",
+        results: results.affectedRows,
       });
+      return;
     }
-  );
+    res.status(200).send({
+      status: "success",
+      message: "Added new Favorite",
+      results,
+    });
+  } catch (error) {
+    console.error(err);
+    res.status(500).send({ status: "error", message: err.sqlMessage });
+    return;
+  }
 });
 
-router.post("/delfav", (req, res) => {
+router.post("/delfav", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { Bot_id, Sym, Strategys_Id } = req.body;
   if (!(Bot_id && Sym && Strategys_Id)) {
     res.status(400).send({
@@ -195,66 +203,34 @@ router.post("/delfav", (req, res) => {
     });
     return;
   }
-  db.execute(
-    "DELETE FROM fav WHERE Bot_id = ? AND Sym = ? AND Strategys_Id = ?",
-    [Bot_id, Sym, Strategys_Id],
-    function (err, results) {
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-        return;
-      }
-      if (results.affectedRows === 0) {
-        res.status(500).send({
-          message: "Can't Delete Favorite",
-          results: results?.affectedRows ?? results,
-        });
-        return;
-      }
-      res.status(200).send({
-        status: "success",
-        message: "Delete Favorite",
-        affectedRows: results.affectedRows,
-      });
-    }
-  );
-});
 
-router.post("/getfav", (req, res) => {
-  const { Bot_id } = req.body;
-  if (!Bot_id) {
-    res.status(400).send({
-      status: "error",
-      message: "Incomplete request ",
+  try {
+    const [results] = await db.execute(
+      "DELETE FROM fav WHERE Bot_id = ? AND Sym = ? AND Strategys_Id = ?",
+      [Bot_id, Sym, Strategys_Id]
+    );
+    if (results.affectedRows === 0) {
+      res.status(500).send({
+        message: "Can't Delete Favorite",
+        results: results?.affectedRows ?? results,
+      });
+      return;
+    }
+    res.status(200).send({
+      status: "success",
+      message: "Delete Favorite",
+      affectedRows: results.affectedRows,
     });
-    return;
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
   }
-  db.execute(
-    "SELECT * FROM fav WHERE Bot_id = ?",
-    [Bot_id],
-    function (err, results) {
-      if (err) {
-        console.error(err);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
-        return;
-      }
-      console.log(results);
-      const rett = [];
-      results.map(({ Sym, Strategys_Id }, i) => {
-        rett.push({ Sym, Strategys_Id });
-      });
-      console.log(rett);
-
-      res.send({
-        status: "success",
-        Bot_id,
-        fav: rett,
-      });
-    }
-  );
 });
 
-router.post("/getsymstgboxdata", (req, res) => {
+router.post("/getfav", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { Bot_id } = req.body;
   if (!Bot_id) {
     res.status(400).send({
@@ -264,7 +240,40 @@ router.post("/getsymstgboxdata", (req, res) => {
     return;
   }
 
-  const sql2 = `
+  try {
+    const [results] = await db.execute("SELECT * FROM fav WHERE Bot_id = ?", [
+      Bot_id,
+    ]);
+    console.log(results);
+    const rett = [];
+    results.map(({ Sym, Strategys_Id }, i) => {
+      rett.push({ Sym, Strategys_Id });
+    });
+    console.log(rett);
+
+    res.send({
+      status: "success",
+      Bot_id,
+      fav: rett,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "error", message: err.sqlMessage });
+  }
+});
+
+router.post("/getsymstgboxdata", async (req, res) => {
+  const db = await require("../services/db_promise");
+  const { Bot_id } = req.body;
+  if (!Bot_id) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request ",
+    });
+    return;
+  }
+
+  const sql = `
     SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
       CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav,
       CASE WHEN selected.Selected_id IS NOT NULL THEN 1 END as isSelected,
@@ -291,18 +300,19 @@ router.post("/getsymstgboxdata", (req, res) => {
       )s3 ON symbols.Sym = s3.Sym AND
       strategies.Strategy_id = s3.Strategy_id;  
   `;
-
-  db.execute(sql2, [Bot_id, Bot_id], (err, results) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send({ status: "error", message: err.sqlMessage });
-      return;
-    }
+  try {
+    const [results] = await db.execute(sql, [Bot_id, Bot_id]);
     res.send({
       status: "success",
       data: results,
     });
-  });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+    return;
+  }
 });
 
 router.post("/getusernames", async (req, res) => {
@@ -331,7 +341,8 @@ router.post("/getusernames", async (req, res) => {
   }
 });
 
-router.post("/getsymstgboxdata_onlysym", (req, res) => {
+router.post("/getsymstgboxdata_onlysym", async (req, res) => {
+  const db = await require("../services/db_promise");
   const { Bot_id, Sym } = req.body;
   if (!Bot_id || !Sym) {
     res.status(400).send({
@@ -341,7 +352,7 @@ router.post("/getsymstgboxdata_onlysym", (req, res) => {
     return;
   }
 
-  const sql2 = `
+  const sql = `
     SELECT symbols.Sym, strategies.Strategy_id, strategies.Strategy_name, 
       CASE WHEN fav.Fav_id IS NOT NULL THEN 1 END as isFav,
       CASE WHEN selected.Selected_id IS NOT NULL THEN 1 END as isSelected,
@@ -369,18 +380,19 @@ router.post("/getsymstgboxdata_onlysym", (req, res) => {
       strategies.Strategy_id = s3.Strategy_id
       WHERE symbols.Sym = ?;  
   `;
-
-  db.execute(sql2, [Bot_id, Bot_id, Sym], (err, results) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send({ status: "error", message: err.sqlMessage });
-      return;
-    }
+  try {
+    const [results] = await db.execute(sql, [Bot_id, Bot_id, Sym]);
     res.send({
       status: "success",
       data: results,
     });
-  });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+    return;
+  }
 });
 
 module.exports = router;

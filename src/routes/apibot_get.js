@@ -73,7 +73,7 @@ router.get("/getsymstghistory", async (req, res) => {
     // ถ้ายังไม่มีhistory
     else {
       const [result] = await db.execute(
-        "SELECT Strategy_name FROM strategies WHERE Strategy_id = 1",
+        "SELECT Strategy_name FROM strategies WHERE Strategy_id = ?",
         [Strategy_id]
       );
 

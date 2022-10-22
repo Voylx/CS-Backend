@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { db } = require("./src/services/db");
+// const { db } = require("./src/services/db");
 const { v4: uuidv4 } = require("uuid");
 
 const bcrypt = require("bcrypt");
@@ -30,7 +30,8 @@ app.get("/", (req, res) => {
   );
 });
 
-app.post("/register", function (req, res) {
+app.post("/register", async function (req, res) {
+  const db = await require("./src/services/db_promise");
   const { email, username, password } = req.body;
   const user_id = uuidv4();
   if (!(email && username && password)) {
@@ -42,27 +43,25 @@ app.post("/register", function (req, res) {
     //hash password
     bcrypt.hash(password, saltRounds, function (err, hash) {
       // Store hash in your password DB.
-      db.execute(
-        "INSERT IGNORE INTO users (user_id, username, email, password) VALUES (?,?,?,?)",
-        [user_id, username, email, hash],
-        function (err, result) {
-          if (err) {
-            console.log(err);
-            res.status(500).send({ status: "error", message: err.sqlMessage });
-          }
-          //the email is already in the database
-          else if (result.affectedRows === 0) {
-            res.status(400).send({
-              status: "error",
-              message: "This Email is already registered",
-            });
-          } else
-            res.send({
-              status: "ok",
-              message: { affectedRows: result.affectedRows },
-            });
-        }
-      );
+      try {
+        const [result] = db.execute(
+          "INSERT IGNORE INTO users (user_id, username, email, password) VALUES (?,?,?,?)",
+          [user_id, username, email, hash]
+        );
+        if (result.affectedRows === 0) {
+          res.status(400).send({
+            status: "error",
+            message: "This Email is already registered",
+          });
+        } else
+          res.send({
+            status: "ok",
+            message: { affectedRows: result.affectedRows },
+          });
+      } catch (error) {
+        console.log(err);
+        res.status(500).send({ status: "error", message: err.sqlMessage });
+      }
     });
   }
 });
@@ -126,26 +125,30 @@ app.get("/symbols", async function (req, res) {
   const db = await require("./src/services/db_promise");
   try {
     const [data] = await db.execute("SELECT * FROM symbols");
+    // db.end();
     const symbols = data.map((V, I) => V.Sym);
     res.send({ status: "ok", symbols: symbols });
   } catch (err) {
-    res.status(500).send({ status: "error", message: err.sqlMessage });
+    console.log(err);
+    res.status(500).send({ status: "error", message: err.sqlMessage || err });
   }
 });
 
-app.get("/strategies", (req, res) => {
-  db.execute("SELECT * FROM strategies", function (err, data) {
-    //check sql errors
-    if (err) {
-      res.status(500).send({ status: "error", message: err.sqlMessage });
-      return;
-    }
+app.get("/strategies", async (req, res) => {
+  const db = await require("./src/services/db_promise");
+  try {
+    const [data] = await db.execute("SELECT * FROM strategies");
     const response = {};
     data.map(({ Strategy_id, Strategy_name }) => {
       response[Strategy_id] = Strategy_name;
     });
     res.send({ status: "ok", strategies: response });
-  });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+  }
 });
 
 app.get("/test", async (req, res) => {

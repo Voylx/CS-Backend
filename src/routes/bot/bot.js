@@ -1,6 +1,5 @@
 "use strict";
 const express = require("express");
-const { db } = require("../../services/db");
 const BTK = require("../../API/bitkub");
 
 const calc_strategy = require("../../strategies/calc_strategy");
@@ -11,7 +10,9 @@ const router = express.Router();
 router.use(cron_bot);
 
 //get api_key from database (only methods post)
-router.post("/", function (req, res, next) {
+router.post("*", async function (req, res, next) {
+  const db = await require("../../services/db_promise");
+
   const { User_id } = req.body;
 
   if (!User_id) {
@@ -23,12 +24,9 @@ router.post("/", function (req, res, next) {
   }
 
   const sql = "SELECT API_key, API_secert FROM bitkub WHERE User_id = ?";
-  db.execute(sql, [User_id], (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send({ status: "error", message: err.message });
-      return;
-    }
+
+  try {
+    const [result] = await db.execute(sql, [User_id]);
     if (!result[0]) {
       res.status(404).send({
         status: "error",
@@ -42,7 +40,15 @@ router.post("/", function (req, res, next) {
       };
       next();
     }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ status: "error", message: error.message || error });
+    return;
+  }
+});
+
+router.post("/test", function (req, res) {
+  // res.send("test");
 });
 
 router.post("/place_bid", (req, res) => {
@@ -135,6 +141,7 @@ router.get("/getsymaction", async (req, res) => {
 });
 
 router.get("/backtest", async (req, res) => {
+  const initMoney = Number(req.query.initMoney) || 1000;
   const { stgID, sym, durtion } = req.query;
   if (!stgID || !sym || !durtion) {
     res.status(400).send({
@@ -166,19 +173,18 @@ router.get("/backtest", async (req, res) => {
   try {
     const { getEMA } = require("../../strategies/emacross");
     const strategy_name = {
-      1: ["cdc", "1D"],
-      2: ["cdc", "240"],
-      3: ["ema_10_21", "1D"],
-      4: ["ema_10_21", "240"],
-      5: ["ema_10_21", "60"],
+      1: ["cdc", "1D", 1],
+      2: ["cdc", "240", 6],
+      3: ["ema_10_21", "1D", 1],
+      4: ["ema_10_21", "240", 6],
+      5: ["ema_10_21", "60", 24],
     };
 
-    const [stg, tf] = strategy_name[stgID];
-    // const data = await BTK.getclosechart(sym, tf, 99);
-    const { data, time } = await BTK.get_close_timechart(sym, tf, 700);
+    const [stg, tf, multiply_duration] = strategy_name[stgID];
+    const new_Duration = durtion * multiply_duration;
+    const { data, time } = await BTK.get_close_timechart(sym, tf, new_Duration);
     const { slow, fast } = getEMA[stg](data);
     // console.log({ data, time, slow, fast });
-    const initMoney = 1000;
     let balance_bth = initMoney;
     let balance_coin = 0;
 
@@ -222,14 +228,20 @@ router.get("/backtest", async (req, res) => {
       }
     }
 
-    const profit_Percent = ((balance_bth - initMoney) / initMoney) * 100;
+    const profit_Percent = (
+      ((balance_bth - initMoney) / initMoney) *
+      100
+    ).toFixed(2);
 
     res.send({
       status: "ok",
       message: "backtest",
+      data,
+      time,
       results,
       profit,
       profit_Percent,
+      start: time[0],
     });
   } catch (error) {
     console.log(error);
