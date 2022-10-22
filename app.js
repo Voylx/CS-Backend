@@ -59,7 +59,7 @@ app.post("/register", async function (req, res) {
             message: { affectedRows: result.affectedRows },
           });
       } catch (error) {
-        console.log(err);
+        console.log(error);
         res.status(500).send({ status: "error", message: err.sqlMessage });
       }
     });
@@ -117,6 +117,7 @@ app.post("/authen", function (req, res) {
     if (response.status === "ok") res.send(response);
     else res.status(400).send(response);
   } catch (error) {
+    console.log(error);
     res.status(401).send({ status: "error", message: "Token invalid" });
   }
 });
@@ -125,7 +126,6 @@ app.get("/symbols", async function (req, res) {
   const db = await require("./src/services/db_promise");
   try {
     const [data] = await db.execute("SELECT * FROM symbols");
-    // db.end();
     const symbols = data.map((V, I) => V.Sym);
     res.send({ status: "ok", symbols: symbols });
   } catch (err) {

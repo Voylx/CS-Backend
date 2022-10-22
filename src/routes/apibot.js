@@ -41,7 +41,7 @@ router.post("/addbot", async (req, res) => {
       });
     } else res.send({ status: "ok", message: "Create Bot Success" });
   } catch (error) {
-    console.error(err);
+    console.error(error);
     res.status(500).send({ status: "error", message: err.sqlMessage });
   }
 });
@@ -187,8 +187,8 @@ router.post("/addfav", async (req, res) => {
       results,
     });
   } catch (error) {
-    console.error(err);
-    res.status(500).send({ status: "error", message: err.sqlMessage });
+    console.error(error);
+    res.status(500).send({ status: "error", message: error.sqlMessage });
     return;
   }
 });
@@ -258,7 +258,7 @@ router.post("/getfav", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ status: "error", message: err.sqlMessage });
+    res.status(500).send({ status: "error", message: error.sqlMessage });
   }
 });
 

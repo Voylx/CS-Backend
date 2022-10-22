@@ -228,10 +228,14 @@ router.get("/backtest", async (req, res) => {
       }
     }
 
-    const profit_Percent = (
-      ((balance_bth - initMoney) / initMoney) *
-      100
-    ).toFixed(2);
+    const last_bth =
+      results[results.length - 1].Action === "SELL"
+        ? results[results.length - 1].balance_bth
+        : results[results.length - 2].balance_bth;
+
+    const profit_Percent = (((last_bth - initMoney) / initMoney) * 100).toFixed(
+      2
+    );
 
     res.send({
       status: "ok",
