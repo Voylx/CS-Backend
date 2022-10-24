@@ -97,11 +97,11 @@ router.post(
     //เก็บข้อมูลในDatabase
     const { Bot_id, Sym, Strategys_Id, Amt_money } = req.body;
     try {
-      const [result] = await db.execute(
+      const [result_insertSelected] = await db.execute(
         "INSERT IGNORE INTO selected (Bot_id, Sym, Strategys_Id, Amt_money) VALUES (?,?,?,?)",
         [Bot_id, Sym, Strategys_Id, Amt_money]
       );
-      if (result.affectedRows === 0) {
+      if (result_insertSelected.affectedRows === 0) {
         res.status(500).send({
           status: "error",
           message:
@@ -109,9 +109,10 @@ router.post(
         });
         return;
       }
+
       res.status(200).send({
         status: "success",
-        result,
+        result: result_insertSelected,
       });
     } catch (error) {
       console.error(error);

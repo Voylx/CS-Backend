@@ -45,13 +45,41 @@ const balances = async (key, secert) => {
   }
 };
 
+const wallet = async (key, secert) => {
+  const ts = await getSevertime();
+
+  const data = { ts: ts };
+  data.sig = hash(data, secert);
+
+  try {
+    const result = await axios.post("/api/market/wallet", data, {
+      headers: header(key),
+    });
+    return result.data;
+  } catch (err) {
+    // console.error(err);
+    return { error: err };
+  }
+};
+
 const place_bid = async ({ key, secert }, sym, amt) => {
   // EX.symbol "THB_BTC"
+
+  const wallet_data = await wallet(key, secert);
+  const wallet_sym_data = wallet_data.result[sym];
+  if (wallet_sym_data)
+    return {
+      error: 99,
+      message: `Can't Buy ${sym}, ${sym} is already your wallet`,
+    };
+
   const ts = await getSevertime();
+  // console.log("key", key);
+  // console.log("secert", secert);
 
   const data = {
     ts: ts,
-    sym: sym,
+    sym: `THB_${sym}`,
     amt: amt,
     typ: "market",
     rat: 0,
@@ -59,7 +87,7 @@ const place_bid = async ({ key, secert }, sym, amt) => {
   data.sig = hash(data, secert);
 
   try {
-    const result = await axios.post("/api/market/place-bid/test", data, {
+    const result = await axios.post("/api/market/place-bid", data, {
       headers: header(key),
     });
     return result.data;
@@ -73,7 +101,7 @@ const place_ask = async ({ key, secert }, sym, amt) => {
 
   const data = {
     ts: ts,
-    sym: sym,
+    sym: `THB_${sym}`,
     amt: amt,
     typ: "market",
     rat: 0,
@@ -81,13 +109,24 @@ const place_ask = async ({ key, secert }, sym, amt) => {
   data.sig = hash(data, secert);
 
   try {
-    const result = await axios.post("/api/market/place-ask/test", data, {
+    const result = await axios.post("/api/market/place-ask", data, {
       headers: header(key),
     });
     return result.data;
   } catch (err) {
     return err;
   }
+};
+
+const place_ask_all = async ({ key, secert }, sym) => {
+  const wallet_data = await wallet(key, secert);
+  const sell_amt = wallet_data.result[sym];
+  if (!sell_amt)
+    return {
+      error: 99,
+      message: `Can't Sell ${sym}, Don't have ${sym} in your wallet`,
+    };
+  return await place_ask({ key, secert }, sym, sell_amt);
 };
 
 const getchart = async (symbol, tf = "1D" || "240" || "60", day = 5) => {
@@ -140,8 +179,10 @@ const getticker = async () => {
 module.exports = {
   getSevertime,
   balances,
+  wallet,
   place_bid,
   place_ask,
+  place_ask_all,
   getchart,
   getclosechart,
   get_close_timechart,

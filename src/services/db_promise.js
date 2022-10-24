@@ -5,8 +5,7 @@ const dbconnect = {
   user: "Channatt_ku_root",
   password: "%y8dJ@vV*syVQ3Y",
   database: "Channatt_ku",
-
-  // multipleStatements: true,
+  multipleStatements: true,
 };
 
 // create the connection to database

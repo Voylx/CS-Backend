@@ -47,8 +47,22 @@ router.post("*", async function (req, res, next) {
   }
 });
 
-router.post("/test", function (req, res) {
-  // res.send("test");
+router.post("/test", async function (req, res) {
+  const client_API = {
+    key: "1f960a198fd2c8d001fe97ff851be51d",
+
+    secert: "57b48a085cbe7839880b7104b2281654",
+  };
+  const sym = "XRP";
+  // const result = await BTK.place_ask(client_API, "THB_BTC", 0.0001);
+  // console.log(result);
+
+  // SELL ALL
+  const wallet = await BTK.wallet(client_API.key, client_API.secert);
+  const sell_amt = wallet.result[sym];
+  const result = await BTK.place_ask(client_API, `THB_${sym}`, sell_amt);
+
+  res.send({ status: "success", wallet, result });
 });
 
 router.post("/place_bid", (req, res) => {

@@ -41,10 +41,10 @@ app.post("/register", async function (req, res) {
     });
   } else {
     //hash password
-    bcrypt.hash(password, saltRounds, function (err, hash) {
+    bcrypt.hash(password, saltRounds, async function (err, hash) {
       // Store hash in your password DB.
       try {
-        const [result] = db.execute(
+        const [result] = await db.execute(
           "INSERT IGNORE INTO users (user_id, username, email, password) VALUES (?,?,?,?)",
           [user_id, username, email, hash]
         );
@@ -60,7 +60,7 @@ app.post("/register", async function (req, res) {
           });
       } catch (error) {
         console.log(error);
-        res.status(500).send({ status: "error", message: err.sqlMessage });
+        res.status(500).send({ status: "error", message: error.sqlMessage });
       }
     });
   }
