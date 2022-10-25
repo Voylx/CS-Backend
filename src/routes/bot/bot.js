@@ -196,9 +196,22 @@ router.get("/backtest", async (req, res) => {
         continue;
       }
     }
+    if (results.length === 0) {
+      res.send({
+        status: "ok",
+        message: "backtest",
+        data,
+        time,
+        results,
+        profit,
+        profit_Percent: 0,
+        start: time[0],
+      });
+      return;
+    }
 
     const last_bth =
-      results[results.length - 1].Action === "SELL"
+      results[results.length - 1]?.Action === "SELL"
         ? results[results.length - 1].balance_bth
         : results[results.length - 2].balance_bth;
 
