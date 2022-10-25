@@ -1,6 +1,7 @@
 const express = require("express");
 
-const bitkub = require("../API/bitkub");
+const BTK = require("../API/bitkub");
+const getapikey = require("../middleware/getapikey");
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.post("/add_apibitkub", async (req, res) => {
   }
   try {
     // check api to bitkub
-    const resp = await bitkub.balances(API_key, API_secert);
+    const resp = await BTK.balances(API_key, API_secert);
     if (resp.error !== 0) {
       res.status(400).send({
         status: "error",
@@ -53,7 +54,7 @@ router.post("/del_apibitkub", (req, res) => {
   res.send({ status: "ok", message: "ยังไม่ได้ทำ" });
 });
 
-// update api bitkub
+// update api BTK
 router.post("/update_apibitkub", async (req, res) => {
   const db = await require("../services/db_promise");
   const { User_id, API_key, API_secert } = req.body;
@@ -66,7 +67,7 @@ router.post("/update_apibitkub", async (req, res) => {
   }
   try {
     // check api to bitkub
-    const resp = await bitkub.balances(API_key, API_secert);
+    const resp = await BTK.balances(API_key, API_secert);
     if (resp.error !== 0) {
       res.status(400).send({
         status: "error",
@@ -94,6 +95,51 @@ router.post("/update_apibitkub", async (req, res) => {
     res
       .status(500)
       .send({ status: "error", message: error.sqlMessage || error });
+  }
+});
+
+// get available balance from BTK
+router.post("/available_balance", getapikey, async (req, res) => {
+  const db = await require("../services/db_promise");
+  const client_API = req.headers.BTK;
+  const { Bot_id } = req.body;
+  if (!Bot_id) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete information!!!",
+    });
+    return;
+  }
+
+  try {
+    const all = await BTK.wallet(client_API.key, client_API.secert).then(
+      (resp) => resp.result.THB
+    );
+    const sql = `
+    SELECT selected.Bot_id,
+      SUM(money.Amt_money) as waitOrder
+      FROM selected
+      JOIN money on selected.Bot_id=money.Bot_id AND selected.Sym = money.Sym
+      LEFT JOIN (
+            SELECT h1.* FROM history h1
+          INNER JOIN
+            (
+            SELECT Bot_id,Sym,max(Timestamp) as mts FROM history
+            GROUP BY Bot_id,Sym
+            ) h2 on h2.Sym = h1.Sym  AND h2.Bot_id = h1.Bot_id AND h1.Timestamp = mts
+              
+          ) H ON selected.Bot_id = H.Bot_id AND selected.Sym = H.sym
+      
+      WHERE Side  IS NULL OR Side = "SELL" AND selected.Bot_id = ?
+      GROUP BY selected.Bot_id;`;
+    const [data] = await db.execute(sql, [Bot_id]);
+    const waitOrder = await data[0].waitOrder;
+    const available = all - waitOrder;
+
+    res.send({ status: "ok", all, waitOrder, available });
+  } catch (error) {
+    console.log(error);
+    res.send({ status: "error", message: error?.sqlMessage ?? error });
   }
 });
 

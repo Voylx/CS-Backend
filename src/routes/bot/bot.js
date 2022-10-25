@@ -2,6 +2,8 @@
 const express = require("express");
 const BTK = require("../../API/bitkub");
 
+const getapikey = require("../../middleware/getapikey");
+
 const calc_strategy = require("../../strategies/calc_strategy");
 
 const cron_bot = require("./cron_bot");
@@ -10,59 +12,12 @@ const router = express.Router();
 router.use(cron_bot);
 
 //get api_key from database (only methods post)
-router.post("*", async function (req, res, next) {
-  const db = await require("../../services/db_promise");
-
-  const { User_id } = req.body;
-
-  if (!User_id) {
-    res.status(400).send({
-      status: "error",
-      message: "Incomplete information!!!",
-    });
-    return;
-  }
-
-  const sql = "SELECT API_key, API_secert FROM bitkub WHERE User_id = ?";
-
-  try {
-    const [result] = await db.execute(sql, [User_id]);
-    if (!result[0]) {
-      res.status(404).send({
-        status: "error",
-        message: "API_key or API_secert Not found",
-      });
-    } else {
-      // SAVED API_KEY IN REQUEST BODY
-      req.headers.BTK = {
-        key: result[0].API_key,
-        secert: result[0].API_secert,
-      };
-      next();
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ status: "error", message: error.message || error });
-    return;
-  }
-});
+router.post("*", getapikey);
 
 router.post("/test", async function (req, res) {
-  const client_API = {
-    key: "1f960a198fd2c8d001fe97ff851be51d",
+  console.log(req.headers.BTK);
 
-    secert: "57b48a085cbe7839880b7104b2281654",
-  };
-  const sym = "XRP";
-  // const result = await BTK.place_ask(client_API, "THB_BTC", 0.0001);
-  // console.log(result);
-
-  // SELL ALL
-  const wallet = await BTK.wallet(client_API.key, client_API.secert);
-  const sell_amt = wallet.result[sym];
-  const result = await BTK.place_ask(client_API, `THB_${sym}`, sell_amt);
-
-  res.send({ status: "success", wallet, result });
+  res.send({ status: "success" });
 });
 
 router.post("/place_bid", (req, res) => {
