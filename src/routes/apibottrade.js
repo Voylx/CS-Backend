@@ -130,11 +130,11 @@ router.post("/available_balance", getapikey, async (req, res) => {
               
           ) H ON selected.Bot_id = H.Bot_id AND selected.Sym = H.sym
       
-      WHERE Side  IS NULL OR Side = "SELL" AND selected.Bot_id = ?
+      WHERE (Side  IS NULL OR Side = "SELL") AND selected.Bot_id = ?
       GROUP BY selected.Bot_id;`;
     const [data] = await db.execute(sql, [Bot_id]);
-    const waitOrder = await data[0].waitOrder;
-    const available = all - waitOrder;
+    const waitOrder = (await data[0]?.waitOrder) || 0;
+    const available = all - waitOrder || 0;
 
     res.send({ status: "ok", all, waitOrder, available });
   } catch (error) {
