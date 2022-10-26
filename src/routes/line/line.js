@@ -12,35 +12,89 @@ router.post("/linewebhook", async (req, res) => {
   const lineuserid = events[0]?.source?.userId;
   const replyToken = events[0]?.replyToken;
   const text = events[0]?.message?.text;
+
+  console.log("events : ", events);
   // prettier-ignore
-  if (!text||!lineuserid||!text) {  res.send("ok"); return; }
+  if (!text||!lineuserid) {  res.send("ok"); return; }
 
   //todooooo
   //เอาlineuseridไปเชคในตาราง line
   // prettier-ignore
   try {
-    const [lineUsers] = await db.execute("SELECT * FROM line WHERE LineUser_id = ?",[lineuserid]);
-    if (lineUsers.length > 0) { res.send("ok"); return; }
-    // ถ้าไม่มี ค่อยทำ
-    // check text and rand_num
-    const [data] = await db.query( "SELECT * FROM prelinkline WHERE rand_num = ?", [text] );
-    if (data.length === 0) { res.send("ok"); return; }
+    if(text?.startsWith("#")) {
+      const rett = await lineCommand(lineuserid,text,replyToken)
+      console.log(rett);
+      res.send(rett)
+      return
+    }
+    else
+    res.send(await linkLine(lineuserid,text,replyToken))
 
-    // store line_users_id in line table
-    await db.query("INSERT INTO line (User_id, LineUser_id) VALUES (?,?);", [data[0].User_id, lineuserid]);
-    
-    // delete in prelinkline
-    await db.query("DELETE FROM prelinkline WHERE User_id = ?", [data[0].User_id]);
-    
-    line
-      .reply(replyToken, "Connect Success")
-      .then((e) => res.send(e));
 
   } catch (error) {
     console.error(error);
     res.status(500).send({ status: "error", message: error });
   }
 });
+
+async function lineCommand(lineuserid, text, replyToken) {
+  const db = await require("../../services/db_promise");
+  if (text === "#Connect") {
+    const [lineUsers] = await db.execute(
+      "SELECT * FROM line WHERE LineUser_id = ?",
+      [lineuserid]
+    );
+    if (lineUsers.length > 0) {
+      // เชื่อมไปแล้วว
+      return line.reply(
+        replyToken,
+        "บัญชีของท่านได้ทำการเชื่อมต่อกับ Crypto-Bot แล้ว"
+      );
+    } else {
+      return line.reply(
+        replyToken,
+        `โปรดใส่รหัสตามที่ขึ้นบนหน้าจอเพื่อเชื่อมต่อระบบ 🥰🤙🏼
+        https://demo-link.com/
+        `
+      );
+    }
+  } else return "ok";
+}
+
+async function linkLine(lineuserid, text, replyToken) {
+  const db = await require("../../services/db_promise");
+  const [lineUsers] = await db.execute(
+    "SELECT * FROM line WHERE LineUser_id = ?",
+    [lineuserid]
+  );
+  if (lineUsers.length > 0) {
+    return "ok";
+  }
+  // ถ้าไม่มี ค่อยทำ
+  // check text and rand_num
+  const [data] = await db.query(
+    "SELECT * FROM prelinkline WHERE rand_num = ?",
+    [text]
+  );
+  if (data.length === 0) {
+    return "ok";
+  }
+
+  // store line_users_id in line table
+  await db.query("INSERT INTO line (User_id, LineUser_id) VALUES (?,?);", [
+    data[0].User_id,
+    lineuserid,
+  ]);
+
+  // delete in prelinkline
+  await db.query("DELETE FROM prelinkline WHERE User_id = ?", [
+    data[0].User_id,
+  ]);
+
+  const rett = await line.reply(replyToken, "Connect Success");
+
+  return rett;
+}
 
 router.post("/pushtextmessage", async (req, res) => {
   const { text, lineuserid } = req.body;
