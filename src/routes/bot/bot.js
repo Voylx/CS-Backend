@@ -196,7 +196,7 @@ router.get("/backtest", async (req, res) => {
         continue;
       }
     }
-    console.log(results);
+    // console.log(results);
     if (results.length < 2) {
       res.send({
         status: "ok",

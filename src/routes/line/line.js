@@ -1,6 +1,7 @@
 const express = require("express");
 
 const authgetuser = require("../../middleware/authen_and_getuserid");
+const Line = require("../../services/line");
 
 const router = express.Router();
 
@@ -158,6 +159,43 @@ router.post("/get_prelinkline", authgetuser, async (req, res) => {
       res.send({
         status: "ok",
         data: results[0],
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+  }
+});
+
+router.post("/unlinkline", authgetuser, async (req, res) => {
+  const db = await require("../../services/db_promise");
+
+  try {
+    const { User_id } = req.body;
+    const [lineUsers] = await db.execute(
+      "SELECT * FROM line WHERE User_id = ?",
+      [User_id]
+    );
+    if (lineUsers.length === 0) {
+      res
+        .status(500)
+        .send({ status: "error", message: "lineUsers data not found" });
+      return;
+    }
+    const { LineUser_id } = lineUsers[0];
+    const [del] = await db.execute("DELETE FROM `line` WHERE LineUser_id = ?", [
+      LineUser_id,
+    ]);
+    if (del.affectedRows > 0) {
+      Line.push(
+        LineUser_id,
+        "ระบบได้ทำการยกเลิกการเชื่อมต่อ Crypto-Bot เรียบร้อยแล้ว ขอบคุณที่ใช้บริการ"
+      );
+      res.send({
+        status: "ok",
+        message: "Disconnected Line Successfully",
       });
     }
   } catch (error) {
