@@ -396,4 +396,33 @@ router.post("/getsymstgboxdata_onlysym", async (req, res) => {
   }
 });
 
+router.post("/getactionhistory", async (req, res) => {
+  const db = await require("../services/db_promise");
+
+  const { Bot_id } = req.body;
+  if (!Bot_id) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request ",
+    });
+    return;
+  }
+
+  const sql = `SELECT Sym, UNIX_TIMESTAMP(Timestamp) as ts , Side, Amt_money, Amt_coins FROM history WHERE Bot_id = ? ORDER BY ts DESC`;
+
+  try {
+    const [his] = await db.execute(sql, [Bot_id]);
+    res.send({
+      status: "success",
+      history: his,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+    return;
+  }
+});
+
 module.exports = router;

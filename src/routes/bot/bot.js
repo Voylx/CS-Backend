@@ -35,12 +35,13 @@ router.post("/place_bid", (req, res) => {
   // const sym = "THB_XLM";
 
   // const amt = 10;
-  BTK.place_bid(API, "THB_" + sym, amt)
-    .then((data) => {
+  BTK.place_bid(API, sym, amt)
+    .then(async (data) => {
       // save to database
       // สมมุติว่า save แล้ว
       //
-      res.send({ status: "ok", data });
+      const order_info = await BTK.order_info(API, data?.result?.hash);
+      res.send({ status: "ok", data, order_info });
     })
     .catch((err) => {
       console.log("error:", err);
@@ -63,14 +64,15 @@ router.post("/place_ask", (req, res) => {
   // const sym = "THB_XLM";
 
   // const amt = 10;
-  BTK.place_ask(API, "THB_" + sym, amt)
-    .then((data) => {
+  BTK.place_ask(API, sym, amt)
+    .then(async (data) => {
       console.log(data);
+      const order_info = await BTK.order_info(API, data?.result?.hash);
 
       // save to database
       // สมมุติว่า save แล้ว
       //
-      res.send({ status: "ok", data });
+      res.send({ status: "ok", data, order_info });
     })
     .catch((err) => {
       console.log("error:", err);

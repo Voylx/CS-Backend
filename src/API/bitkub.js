@@ -129,6 +129,26 @@ const place_ask_all = async ({ key, secert }, sym) => {
   return await place_ask({ key, secert }, sym, sell_amt);
 };
 
+const order_info = async ({ key, secert }, order_hash) => {
+  if (!order_hash) return;
+  const ts = await getSevertime();
+
+  const data = {
+    ts: ts,
+    hash: order_hash,
+  };
+  data.sig = hash(data, secert);
+
+  try {
+    const result = await axios.post("/api/market/order-info", data, {
+      headers: header(key),
+    });
+    return result.data;
+  } catch (err) {
+    return err;
+  }
+};
+
 const getchart = async (symbol, tf = "1D" || "240" || "60", day = 5) => {
   // const resolution = "1D";
   const now = Math.floor(Date.now() / 1000);
@@ -187,4 +207,5 @@ module.exports = {
   getclosechart,
   get_close_timechart,
   getticker,
+  order_info,
 };
