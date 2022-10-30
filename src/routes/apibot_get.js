@@ -86,7 +86,7 @@ router.get("/getsymstghistory", async (req, res) => {
         status: "success",
         historys: [],
         Sym,
-        Strategy_name: result[0].Strategy_name,
+        Strategy_name: result[0]?.Strategy_name,
         Strategy_id: Strategy_id,
       });
     }

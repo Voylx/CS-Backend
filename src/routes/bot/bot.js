@@ -150,6 +150,7 @@ router.get("/backtest", async (req, res) => {
       4: ["ema_10_21", "240", 6],
     };
 
+    // console.log(stgID);
     const [stg, tf, multiply_duration] = strategy_name[stgID];
     const new_Duration = durtion * multiply_duration;
     const { data, time } = await BTK.get_close_timechart(sym, tf, new_Duration);
