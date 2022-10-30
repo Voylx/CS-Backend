@@ -148,7 +148,6 @@ router.get("/backtest", async (req, res) => {
       2: ["cdc", "240", 6],
       3: ["ema_10_21", "1D", 1],
       4: ["ema_10_21", "240", 6],
-      5: ["ema_10_21", "60", 24],
     };
 
     const [stg, tf, multiply_duration] = strategy_name[stgID];

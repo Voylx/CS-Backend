@@ -70,9 +70,9 @@ router.post(
   },
   (req, res, next) => {
     // คัดออกถ้าข้อมูลไม่ครบ
-    const { Sym, Strategys_Id, botType, Amt_money } = req.body;
+    const { Sym, Strategy_Id, botType, Amt_money } = req.body;
     if (botType) {
-      if (!(Sym && Strategys_Id && Amt_money)) {
+      if (!(Sym && Strategy_Id && Amt_money)) {
         res.status(400).send({
           status: "error",
           message: "Incomplete request ",
@@ -81,7 +81,7 @@ router.post(
       }
     } else {
       req.body.Amt_money = null;
-      if (!(Sym && Strategys_Id)) {
+      if (!(Sym && Strategy_Id)) {
         res.status(400).send({
           status: "error",
           message: "Incomplete request ",
@@ -95,11 +95,11 @@ router.post(
     const db = await require("../services/db_promise");
 
     //เก็บข้อมูลในDatabase
-    const { Bot_id, Sym, Strategys_Id, Amt_money } = req.body;
+    const { Bot_id, Sym, Strategy_Id, Amt_money } = req.body;
     try {
       const [result_insertSelected] = await db.execute(
-        "INSERT IGNORE INTO selected (Bot_id, Sym, Strategys_Id, Amt_money) VALUES (?,?,?,?)",
-        [Bot_id, Sym, Strategys_Id, Amt_money]
+        "INSERT IGNORE INTO selected (Bot_id, Sym, Strategy_Id, Amt_money) VALUES (?,?,?,?)",
+        [Bot_id, Sym, Strategy_Id, Amt_money]
       );
       if (result_insertSelected.affectedRows === 0) {
         res.status(500).send({
@@ -126,8 +126,8 @@ router.post(
 
 router.post("/delselected", async (req, res) => {
   const db = await require("../services/db_promise");
-  const { Bot_id, Sym, Strategys_Id } = req.body;
-  if (!(Bot_id && Sym && Strategys_Id)) {
+  const { Bot_id, Sym, Strategy_Id } = req.body;
+  if (!(Bot_id && Sym && Strategy_Id)) {
     res.status(400).send({
       status: "error",
       message: "Incomplete request ",
@@ -137,8 +137,8 @@ router.post("/delselected", async (req, res) => {
 
   try {
     const [results] = await db.execute(
-      "DELETE FROM selected WHERE Bot_id = ? AND Sym = ? AND Strategys_Id = ?",
-      [Bot_id, Sym, Strategys_Id]
+      "DELETE FROM selected WHERE Bot_id = ? AND Sym = ? AND Strategy_Id = ?",
+      [Bot_id, Sym, Strategy_Id]
     );
     if (results.affectedRows === 0) {
       res.status(500).send({
@@ -162,8 +162,8 @@ router.post("/delselected", async (req, res) => {
 
 router.post("/addfav", async (req, res) => {
   const db = await require("../services/db_promise");
-  const { Bot_id, Sym, Strategys_Id } = req.body;
-  if (!(Bot_id && Sym && Strategys_Id)) {
+  const { Bot_id, Sym, Strategy_Id } = req.body;
+  if (!(Bot_id && Sym && Strategy_Id)) {
     res.status(400).send({
       status: "error",
       message: "Incomplete request ",
@@ -172,8 +172,8 @@ router.post("/addfav", async (req, res) => {
   }
   try {
     const [results] = await db.execute(
-      "INSERT IGNORE INTO fav (Bot_id, Sym, Strategys_Id) VALUES (?, ?, ?)",
-      [Bot_id, Sym, Strategys_Id]
+      "INSERT IGNORE INTO fav (Bot_id, Sym, Strategy_Id) VALUES (?, ?, ?)",
+      [Bot_id, Sym, Strategy_Id]
     );
     if (results.affectedRows === 0) {
       res.status(500).send({
@@ -196,8 +196,8 @@ router.post("/addfav", async (req, res) => {
 
 router.post("/delfav", async (req, res) => {
   const db = await require("../services/db_promise");
-  const { Bot_id, Sym, Strategys_Id } = req.body;
-  if (!(Bot_id && Sym && Strategys_Id)) {
+  const { Bot_id, Sym, Strategy_Id } = req.body;
+  if (!(Bot_id && Sym && Strategy_Id)) {
     res.status(400).send({
       status: "error",
       message: "Incomplete request ",
@@ -207,8 +207,8 @@ router.post("/delfav", async (req, res) => {
 
   try {
     const [results] = await db.execute(
-      "DELETE FROM fav WHERE Bot_id = ? AND Sym = ? AND Strategys_Id = ?",
-      [Bot_id, Sym, Strategys_Id]
+      "DELETE FROM fav WHERE Bot_id = ? AND Sym = ? AND Strategy_Id = ?",
+      [Bot_id, Sym, Strategy_Id]
     );
     if (results.affectedRows === 0) {
       res.status(500).send({
@@ -247,8 +247,8 @@ router.post("/getfav", async (req, res) => {
     ]);
     console.log(results);
     const rett = [];
-    results.map(({ Sym, Strategys_Id }, i) => {
-      rett.push({ Sym, Strategys_Id });
+    results.map(({ Sym, Strategy_Id }, i) => {
+      rett.push({ Sym, Strategy_Id });
     });
     console.log(rett);
 
@@ -284,12 +284,12 @@ router.post("/getsymstgboxdata", async (req, res) => {
       JOIN strategies
       LEFT JOIN 
       fav ON symbols.Sym = fav.Sym AND 
-      strategies.Strategy_id = fav.Strategys_Id AND
+      strategies.Strategy_id = fav.Strategy_Id AND
       fav.Bot_id = ?
       LEFT JOIN
       selected on selected.Bot_id = ? AND 
       symbols.Sym = selected.Sym AND 
-      strategies.Strategy_id = selected.Strategys_Id
+      strategies.Strategy_id = selected.Strategy_Id
       LEFT JOIN
       (
           SELECT s1.* FROM sym_stg_history s1
@@ -363,12 +363,12 @@ router.post("/getsymstgboxdata_onlysym", async (req, res) => {
       JOIN strategies
       LEFT JOIN 
       fav ON symbols.Sym = fav.Sym AND 
-      strategies.Strategy_id = fav.Strategys_Id AND
+      strategies.Strategy_id = fav.Strategy_Id AND
       fav.Bot_id = ?
       LEFT JOIN
       selected on selected.Bot_id = ? AND 
       symbols.Sym = selected.Sym AND 
-      strategies.Strategy_id = selected.Strategys_Id
+      strategies.Strategy_id = selected.Strategy_Id
       LEFT JOIN
       (
           SELECT s1.* FROM sym_stg_history s1

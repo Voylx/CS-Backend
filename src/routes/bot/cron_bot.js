@@ -175,7 +175,7 @@ async function calc_stg(stg_id) {
 
   let sql = `
     SELECT * FROM SelectedAll
-    WHERE Strategys_Id= ? AND (Sym = 
+    WHERE Strategy_Id= ? AND (Sym = 
   `;
   const symUse = sym_action;
   syms = Object.keys(symUse.action);
@@ -294,15 +294,6 @@ router.get("/every4H", async (req, res) => {
     const cdc4H = await calc_stg(2);
     const ema4H = await calc_stg(4);
     res.send({ cdc4H, ema4H });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ status: "error", message: error?.message });
-  }
-});
-router.get("/every1H", async (req, res) => {
-  try {
-    const ema1H = await calc_stg(5);
-    res.send({ ema1H });
   } catch (error) {
     console.log(error);
     res.status(500).send({ status: "error", message: error?.message });

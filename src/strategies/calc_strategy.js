@@ -7,7 +7,6 @@ const strategy_name = {
   2: ["cdc", "240"],
   3: ["ema_10_21", "1D"],
   4: ["ema_10_21", "240"],
-  5: ["ema_10_21", "60"],
 };
 
 const calc_strategy = async (stg_id) => {
