@@ -134,8 +134,8 @@ router.post("/bot_by_botid", async (req, res) => {
 
 router.post("/isSelectedSym", async (req, res) => {
   const db = await require("../services/db_promise");
-  const { User_id, Bot_id, Sym } = req.body;
-  // check type bot
+  const { Bot_id, Sym } = req.body;
+
   if (!Bot_id || !Sym) {
     res.status(400).send({
       status: "error",

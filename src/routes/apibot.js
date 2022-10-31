@@ -425,4 +425,74 @@ router.post("/getactionhistory", async (req, res) => {
   }
 });
 
+router.post("/getbotstatus", async (req, res) => {
+  const db = await require("../services/db_promise");
+
+  const { Bot_id, Sym } = req.body;
+
+  if (!Bot_id || !Sym) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete request (Bot_id)",
+    });
+    return;
+  }
+
+  try {
+    // check ว่าเหรียญนี้ได้เลือกไว้มั้ย
+    const sqlSelected = `
+    SELECT * FROM selected WHERE Bot_id = ? AND Sym = ? 
+    `;
+    const [selected] = await db.execute(sqlSelected, [Bot_id, Sym]);
+    const data = selected[0];
+    // ไม่ได้เลือกเหรียญนี้ไว้
+    if (!data) {
+      res.send({ status: "success", selected: null, active: false });
+      return;
+    }
+    // check ว่าหลังจากเลือกไว้ได้ทำงานยัง
+    const sqlHistory = `
+    SELECT * FROM history WHERE Bot_id = ? AND Sym = ? AND Timestamp > ?
+    `;
+    const [history] = await db.execute(sqlHistory, [
+      Bot_id,
+      Sym,
+      data.Timestamp,
+    ]);
+    //เลือกแล้วแต่ยังไม่ได้ทำงาน
+    if (history.length === 0) {
+      res.send({
+        status: "success",
+        selected: data,
+        active: "Waiting for signal.",
+      });
+      return;
+    }
+
+    const last_history = history[history.length - 1];
+
+    //ซื้อไปแล้ว
+    if (last_history.Side === "BUY") {
+      res.send({
+        status: "success",
+        selected: data,
+        active: "Already BUY",
+      });
+      return;
+    }
+
+    // console.log(data, history);
+    console.log("last_history", last_history);
+    console.log("Side", last_history.Side);
+
+    res.send({ status: "success", selected: data });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ status: "error", message: error.sqlMessage || error });
+    return;
+  }
+});
+
 module.exports = router;
