@@ -192,7 +192,11 @@ const get_close_timechart = async (symbol, tf, day) => {
   return { data: close_data, time: close_time };
 };
 
-const getticker = async () => {
+const getticker = async (sym) => {
+  if (sym) {
+    const result = await axios.get("/api/market/ticker?sym=THB_" + sym);
+    return result.data;
+  }
   const result = await axios.get("/api/market/ticker");
   return result.data;
 };

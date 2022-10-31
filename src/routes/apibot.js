@@ -463,8 +463,9 @@ router.post("/getbotstatus", async (req, res) => {
     if (history.length === 0) {
       res.send({
         status: "success",
-        selected: data,
+        selected: Boolean(data),
         active: "Waiting for signal.",
+        Initial_money: data.Amt_money,
       });
       return;
     }
@@ -475,9 +476,24 @@ router.post("/getbotstatus", async (req, res) => {
     if (last_history.Side === "BUY") {
       res.send({
         status: "success",
-        selected: data,
-        active: "Already BUY",
+        selected: Boolean(data),
+        active: "Already BUY.",
         Initial_money: data.Amt_money,
+        curr_coin: last_history.Amt_coins,
+        last_history_Side: last_history.Side,
+      });
+      return;
+    }
+
+    //ขายไปแล้ว
+    if (last_history.Side === "SELL") {
+      res.send({
+        status: "success",
+        selected: Boolean(data),
+        active: "Waiting to Buy.",
+        Initial_money: data.Amt_money,
+        curr_money: last_history.Amt_money,
+        last_history_Side: last_history.Side,
       });
       return;
     }
