@@ -25,7 +25,53 @@ async function store_to_sym_stg_history(syms_action, stg_id) {
   }
 }
 
-async function store_to_history(bot_id, sym, side, bitkub_response) {
+async function store_to_history(
+  bot_id,
+  sym,
+  side,
+  bitkub_response,
+  balance_before_action,
+  balance_after_action
+) {
+  const db = await require("../../services/db_promise");
+
+  console.log("31", bitkub_response.result);
+  const { ts, amt, rec } = bitkub_response.result;
+
+  let amt_money, amt_coins;
+
+  if (side === "BUY") {
+    amt_money = amt;
+    amt_coins = balance_after_action[sym] - balance_before_action[sym];
+  }
+  if (side == "SELL") {
+    amt_money = balance_after_action["THB"] - balance_before_action["THB"];
+    amt_coins = amt;
+  }
+
+  try {
+    const sql = `
+    INSERT INTO history
+      ( Bot_id, Sym, Timestamp, Side, Amt_money, Amt_coins)
+      VALUES
+      (?, ?, FROM_UNIXTIME(?), ?, ?, ?);
+    `;
+
+    // const [result] = await db.query(sql, [
+    //   bot_id,
+    //   sym,
+    //   ts,
+    //   side,
+    //   amt_money,
+    //   amt_coins,
+    // ]);
+    // return result;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+async function old_store_to_history(bot_id, sym, side, bitkub_response) {
   const db = await require("../../services/db_promise");
 
   console.log("31", bitkub_response.result);
@@ -126,6 +172,12 @@ async function handleActionTrade(data, bot_id) {
   await data.action.map(async (A, i) => {
     console.log("action", A);
     let BTKres = {};
+
+    const balance_before_action = await BTK.wallet(
+      data.API_key,
+      data.API_secert
+    ).then((res) => res.result);
+
     if (A.Action === "BUY") {
       console.log("BUY");
       //prettier-ignore
@@ -137,9 +189,22 @@ async function handleActionTrade(data, bot_id) {
       // console.log(BTKres);
     }
 
+    const balance_after_action = await BTK.wallet(
+      data.API_key,
+      data.API_secert
+    ).then((res) => res.result);
+
+    // console.log({ BTKres, balance_before_action, balance_after_action });
     if (!BTKres.error == 0) return;
 
-    store_to_history(bot_id, A.Sym, A.Action, BTKres);
+    store_to_history(
+      bot_id,
+      A.Sym,
+      A.Action,
+      BTKres,
+      balance_before_action,
+      balance_after_action
+    );
   });
   // console.log("data", data);
 

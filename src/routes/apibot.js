@@ -477,6 +477,7 @@ router.post("/getbotstatus", async (req, res) => {
         status: "success",
         selected: data,
         active: "Already BUY",
+        Initial_money: data.Amt_money,
       });
       return;
     }
