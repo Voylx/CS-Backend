@@ -57,15 +57,15 @@ async function store_to_history(
       (?, ?, FROM_UNIXTIME(?), ?, ?, ?);
     `;
 
-    // const [result] = await db.query(sql, [
-    //   bot_id,
-    //   sym,
-    //   ts,
-    //   side,
-    //   amt_money,
-    //   amt_coins,
-    // ]);
-    // return result;
+    const [result] = await db.query(sql, [
+      bot_id,
+      sym,
+      ts,
+      side,
+      amt_money,
+      amt_coins,
+    ]);
+    return result;
   } catch (error) {
     console.log(error);
     return error;

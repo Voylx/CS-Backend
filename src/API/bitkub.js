@@ -87,7 +87,7 @@ const place_bid = async ({ key, secert }, sym, amt) => {
   data.sig = hash(data, secert);
 
   try {
-    const result = await axios.post("/api/market/place-bid/test", data, {
+    const result = await axios.post("/api/market/place-bid", data, {
       headers: header(key),
     });
     return result.data;
@@ -109,7 +109,7 @@ const place_ask = async ({ key, secert }, sym, amt) => {
   data.sig = hash(data, secert);
 
   try {
-    const result = await axios.post("/api/market/place-ask/test", data, {
+    const result = await axios.post("/api/market/place-ask", data, {
       headers: header(key),
     });
     return result.data;
