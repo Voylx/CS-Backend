@@ -10,7 +10,7 @@ router.get("/test", function (req, res) {
 
 router.get("/tickers", async (req, res) => {
   const { sym } = req.query;
-  console.log(sym);
+  // console.log(sym);
   try {
     if (!sym) {
       const getsym = await Axios.get("/symbols");
