@@ -477,7 +477,7 @@ router.post("/getbotstatus", async (req, res) => {
       res.send({
         status: "success",
         selected: Boolean(data),
-        active: "Already BUY.",
+        active: "Already BUY",
         Initial_money: data.Amt_money,
         curr_coin: last_history.Amt_coins,
         last_history_Side: last_history.Side,
@@ -490,7 +490,7 @@ router.post("/getbotstatus", async (req, res) => {
       res.send({
         status: "success",
         selected: Boolean(data),
-        active: "Waiting to Buy.",
+        active: "Waiting to Buy",
         Initial_money: data.Amt_money,
         curr_money: last_history.Amt_money,
         last_history_Side: last_history.Side,
