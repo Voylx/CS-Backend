@@ -1,3 +1,5 @@
+"use strict";
+
 const express = require("express");
 
 const BTK = require("../API/bitkub");
@@ -137,6 +139,75 @@ router.post("/available_balance", getapikey, async (req, res) => {
     const available = all - waitOrder || 0;
 
     res.send({ status: "ok", all, waitOrder, available });
+  } catch (error) {
+    console.log(error);
+    res.send({ status: "error", message: error?.sqlMessage ?? error });
+  }
+});
+
+router.post("/bot_info", async (req, res) => {
+  const db = await require("../services/db_promise");
+  const Axios = require("../services/Axios");
+
+  const { Bot_id } = req.body;
+  if (!Bot_id) {
+    res.status(400).send({
+      status: "error",
+      message: "Incomplete information!!!",
+    });
+    return;
+  }
+
+  try {
+    const selected_sym = await db
+      .query("SELECT Sym FROM `selected` WHERE Bot_id = ?", [Bot_id])
+      .then(([data]) =>
+        data.map((v) => {
+          return v.Sym;
+        })
+      );
+
+    const status_promise = selected_sym.map((v) => {
+      return Axios.post(
+        "/api/getbotstatus",
+        {
+          Bot_id: Bot_id,
+          Sym: v,
+        },
+        { headers: { Authorization: req.headers.authorization } }
+      ).then((res) => res.data);
+    });
+
+    const statuses = await Promise.all(status_promise);
+
+    const price_all = await BTK.getprice();
+
+    let sumBalance = 0,
+      sumInit = 0;
+    statuses.map((v) => {
+      const price = price_all[v.Sym].last;
+      sumInit += v.Initial_money;
+      if (v.active === "Waiting for signal.") {
+        sumBalance += v.Initial_money;
+      }
+      if (v.active === "Already BUY") {
+        sumBalance += price * v.curr_coin;
+      }
+      if (v.active === "Waiting to Buy") {
+        sumBalance += v.curr_money;
+      }
+    });
+
+    const pnl = sumBalance - sumInit;
+    const pnl_percent = (pnl / sumInit) * 100;
+
+    res.send({
+      status: "ok",
+      Balance: sumBalance,
+      Initial_money: sumInit,
+      pnl,
+      pnl_percent,
+    });
   } catch (error) {
     console.log(error);
     res.send({ status: "error", message: error?.sqlMessage ?? error });

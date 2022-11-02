@@ -463,6 +463,7 @@ router.post("/getbotstatus", async (req, res) => {
     if (history.length === 0) {
       res.send({
         status: "success",
+        Sym,
         selected: Boolean(data),
         active: "Waiting for signal.",
         Initial_money: data.Amt_money,
@@ -476,6 +477,7 @@ router.post("/getbotstatus", async (req, res) => {
     if (last_history.Side === "BUY") {
       res.send({
         status: "success",
+        Sym,
         selected: Boolean(data),
         active: "Already BUY",
         Initial_money: data.Amt_money,
@@ -489,6 +491,7 @@ router.post("/getbotstatus", async (req, res) => {
     if (last_history.Side === "SELL") {
       res.send({
         status: "success",
+        Sym,
         selected: Boolean(data),
         active: "Waiting to Buy",
         Initial_money: data.Amt_money,

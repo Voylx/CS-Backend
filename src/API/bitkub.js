@@ -200,6 +200,28 @@ const getticker = async (sym) => {
   const result = await axios.get("/api/market/ticker");
   return result.data;
 };
+
+const getprice = async (sym) => {
+  let data;
+  if (sym) {
+    data = await axios
+      .get("/api/market/ticker?sym=THB_" + sym)
+      .then((res) => res.data);
+  } else data = await axios.get("/api/market/ticker").then((res) => res.data);
+
+  const results = {};
+
+  Object.entries(data).map(async ([key, Value]) => {
+    const V = Object.fromEntries(
+      Object.entries(Value).filter(([k, v]) => {
+        return k === "last" || k === "percentChange";
+      })
+    );
+    results[key.substring(4)] = V;
+  });
+  return results;
+};
+
 module.exports = {
   getSevertime,
   balances,
@@ -211,5 +233,6 @@ module.exports = {
   getclosechart,
   get_close_timechart,
   getticker,
+  getprice,
   order_info,
 };
