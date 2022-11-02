@@ -178,23 +178,39 @@ router.post("/bot_info", async (req, res) => {
       ).then((res) => res.data);
     });
 
+    const bot_type = await db
+      .query("SELECT type FROM `bot` WHERE Bot_id = ? ", [Bot_id])
+      .then(([res]) => res[0].type);
+
+    if (bot_type !== 1) {
+      res.send({
+        status: "ok",
+        countSelected: selected_sym.length,
+      });
+      return;
+    }
     const statuses = await Promise.all(status_promise);
 
     const price_all = await BTK.getprice();
 
     let sumBalance = 0,
-      sumInit = 0;
+      sumInit = 0,
+      countBUY = 0,
+      countWait = 0;
     statuses.map((v) => {
       const price = price_all[v.Sym].last;
       sumInit += v.Initial_money;
       if (v.active === "Waiting for signal.") {
         sumBalance += v.Initial_money;
+        countWait++;
       }
       if (v.active === "Already BUY") {
         sumBalance += price * v.curr_coin;
+        countBUY++;
       }
       if (v.active === "Waiting to Buy") {
         sumBalance += v.curr_money;
+        countWait++;
       }
     });
 
@@ -207,6 +223,10 @@ router.post("/bot_info", async (req, res) => {
       Initial_money: sumInit,
       pnl,
       pnl_percent,
+      countBUY,
+      countWait,
+      countSelected: selected_sym.length,
+      bot_type,
     });
   } catch (error) {
     console.log(error);
