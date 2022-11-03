@@ -55,7 +55,7 @@ async function lineCommand(lineuserid, text, replyToken) {
       return line.reply(
         replyToken,
         `โปรดใส่รหัสตามที่ขึ้นบนหน้าจอเพื่อเชื่อมต่อระบบ 🥰🤙🏼
-        https://demo-link.com/
+        https://crypto-bot-trade.netlify.app/bot/linkapiline
         `
       );
     }
