@@ -310,7 +310,7 @@ router.post("/gettpsl", async (req, res) => {
 
   try {
     const [results] = await db.query(sql, [User_id]);
-    res.status(400).send({
+    res.status(200).send({
       status: "ok",
       results: results,
     });
