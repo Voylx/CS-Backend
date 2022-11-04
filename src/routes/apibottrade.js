@@ -255,7 +255,7 @@ router.post("/addtpsl", async (req, res) => {
   try {
     const [result] = await db.query(sql, [User_id, Sym, TP, SL, TP, SL]);
     if (result.affectedRows > 0) {
-      res.status(400).send({
+      res.status(200).send({
         status: "ok",
         message: "Add TP SL Completed",
       });
@@ -284,13 +284,13 @@ router.post("/deltpsl", async (req, res) => {
   try {
     const [result] = await db.query(sql, [User_id, Sym]);
     if (result.affectedRows > 0) {
-      res.status(400).send({
+      res.status(200).send({
         status: "ok",
         message: "Delete TP SL Completed",
       });
       return;
     }
-    res.status(400).send({
+    res.status(200).send({
       status: "ok",
       message: "Can't Delete TP SL",
     });
