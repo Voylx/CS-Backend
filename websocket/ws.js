@@ -40,9 +40,9 @@ async function store_to_history(
   balance_before_action,
   balance_after_action
 ) {
-  const db = await require("../../services/db_promise");
+  const db = await require("../src/services/db_promise");
 
-  console.log("31", bitkub_response.result);
+  // console.log("31", bitkub_response.result);
   const { ts, amt, rec } = bitkub_response.result;
 
   let amt_money, amt_coins;
@@ -105,7 +105,7 @@ async function main() {
       const sym = data?.stream.substring(17);
       const price = data.rat;
 
-      console.log(sym, price);
+      // console.log(sym, price);
       const [Actions] = await db.query(sql, [sym, price, price]);
       if (Actions.length === 0) return;
       Actions.map(async (action) => {
@@ -128,6 +128,7 @@ async function main() {
 
         if (!BTKres.error == 0) return;
 
+        // เก็บ ประวัติ
         store_to_history(
           action.Bot_id,
           action.Sym,
@@ -135,6 +136,12 @@ async function main() {
           BTKres,
           balance_before_action,
           balance_after_action
+        );
+
+        //ลบการเลือก tp/sl
+        const [result] = await db.query(
+          "DELETE FROM SLTP WHERE user_id = ? AND Sym = ?",
+          [action.user_id, action.Sym]
         );
       });
       // console.log(users);
