@@ -71,6 +71,7 @@ async function store_to_history(
     return error;
   }
 }
+
 async function old_store_to_history(bot_id, sym, side, bitkub_response) {
   const db = await require("../../services/db_promise");
 
@@ -173,6 +174,7 @@ async function handleActionTrade(data, bot_id) {
     console.log("action", A);
     let BTKres = {};
 
+    //เก็บ balances ก่อนจะขาย
     const balance_before_action = await BTK.wallet(
       data.API_key,
       data.API_secert
@@ -189,6 +191,7 @@ async function handleActionTrade(data, bot_id) {
       // console.log(BTKres);
     }
 
+    //เก็บ balances หลังขาย
     const balance_after_action = await BTK.wallet(
       data.API_key,
       data.API_secert

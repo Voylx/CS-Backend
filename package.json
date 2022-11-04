@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
+    "devws": "nodemon websocket/ws.js",
     "start": "node app.js"
   },
   "keywords": [],
