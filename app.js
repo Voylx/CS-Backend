@@ -114,8 +114,9 @@ app.post("/authen", function (req, res) {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const response = authen(token);
-    if (response.status === "ok") res.send(response);
-    else res.status(400).send(response);
+    res.send(response);
+    // if (response.status === "ok") res.send(response);
+    // else res.status(400).send(response);
   } catch (error) {
     console.log(error);
     res.status(401).send({ status: "error", message: "Token invalid" });
