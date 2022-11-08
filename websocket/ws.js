@@ -105,7 +105,7 @@ async function main() {
       const sym = data?.stream.substring(17);
       const price = data.rat;
 
-      // console.log(sym, price);
+      console.log(sym, price);
       const [Actions] = await db.query(sql, [sym, price, price]);
       if (Actions.length === 0) return;
       Actions.map(async (action) => {
